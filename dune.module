@@ -1,14 +1,9 @@
-####################################################################
-# Dune module information file: This file gets parsed by dunecontrol
-# and by the CMake build scripts.
-####################################################################
-
-Module: opm-material
-Description: This module contains the thermodynamic framework used by OPM
+Module: ewoms-material
+Description: Thermodynamics and material law code
 Version: 2020.04-pre
 Label: 2020.04-pre
-Maintainer: opm@opm-project.org
-MaintainerName: The Open Porous Media Project
-Url: http://opm-project.org
-Depends: dune-common (>= 2.4)
-Suggests: opm-common
+Maintainer: ewoms@ewoms.org
+MaintainerName: The eWoms Project
+Url: https://ewoms.org
+Depends: ewoms-common
+Suggests: ewoms-eclio

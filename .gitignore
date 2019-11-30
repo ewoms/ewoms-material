@@ -25,9 +25,9 @@ CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 config.h
-opm-material-config.cmake
-opm-material-config-version.cmake
-opm-material-install.cmake
+opm-core-config.cmake
+opm-core-config-version.cmake
+opm-core-install.cmake
 Makefile
 bin/
 lib/
@@ -41,3 +41,35 @@ install_manifest.txt
 CTestTestfile.cmake
 DartConfiguration.tcl
 Testing/
+
+# Build directory in source.
+build/
+build-cmake/
+
+gmon.out
+log.log
+build
+install
+.cproject
+.project
+.idea
+/Debug/
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Mac OS X debug info
+*.dSYM
+
+# emacs directory setting:
+.dir-locals.el
+
+*.pyc
+*.eggs
+*.egg-info

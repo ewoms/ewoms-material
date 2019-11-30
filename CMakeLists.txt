@@ -1,114 +1,43 @@
-# -*- mode: cmake; tab-width: 2; indent-tabs-mode: nil; truncate-lines: t; compile-command: "cmake -Wdev" -*-
+# -*- mode: cmake; tab-width: 2; indent-tabs-mode: t; truncate-lines: t
 # vim: set filetype=cmake autoindent tabstop=2 shiftwidth=2 noexpandtab softtabstop=2 nowrap:
+cmake_minimum_required(VERSION 3.10)
 
-###########################################################################
-#                                                                         #
-# Note: The bulk of the build system is located in the cmake/ directory.  #
-#       This file only contains the specializations for this particular   #
-#       project. Most likely you are interested in editing one of these   #
-#       files instead:                                                    #
-#                                                                         #
-#       dune.module                              Name and version number  #
-#       CMakeLists_files.cmake                   Path of source files     #
-#       cmake/Modules/${project}-prereqs.cmake   Dependencies             #
-#                                                                         #
-###########################################################################
+# set up project and specify the minimum cmake version
+project("ewoms-material" C CXX)
 
-# Mandatory call to project
-project(opm-material C CXX)
+# find the build system (i.e., ewoms-common) and set cmake's module path
+find_package(ewoms-common REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${ewoms-common_MODULE_PATH})
 
-cmake_minimum_required (VERSION 2.8)
+# include the eWoms cmake macros
+include(EwomsMacros)
 
-option(SIBLING_SEARCH "Search for other modules in sibling directories?" ON)
-option(ENABLE_3DPROPS_TESTING "Enable the testing of 3D properties" OFF)
-if (ENABLE_3DPROPS_TESTING)
-  add_definitions(-DENABLE_3DPROPS_TESTING)
-endif()
+# do most of the book-keeping required
+ewoms_project()
 
-if(SIBLING_SEARCH AND NOT opm-common_DIR)
-  # guess the sibling dir
-  get_filename_component(_leaf_dir_name ${PROJECT_BINARY_DIR} NAME)
-  get_filename_component(_parent_full_dir ${PROJECT_BINARY_DIR} DIRECTORY)
-  get_filename_component(_parent_dir_name ${_parent_full_dir} NAME)
-  #Try if <module-name>/<build-dir> is used
-  get_filename_component(_modules_dir ${_parent_full_dir} DIRECTORY)
-  if(IS_DIRECTORY ${_modules_dir}/opm-common/${_leaf_dir_name})
-    set(opm-common_DIR ${_modules_dir}/opm-common/${_leaf_dir_name})
-  else()
-    string(REPLACE ${PROJECT_NAME} opm-common _opm_common_leaf ${_leaf_dir_name})
-    if(NOT _leaf_dir_name STREQUAL _opm_common_leaf
-        AND IS_DIRECTORY ${_parent_full_dir}/${_opm_common_leaf})
-      # We are using build directories named <prefix><module-name><postfix>
-      set(opm-common_DIR ${_parent_full_dir}/${_opm_common_leaf})
-    elseif(IS_DIRECTORY ${_parent_full_dir}/opm-common)
-      # All modules are in a common build dir
-      set(opm-common_DIR "${_parent_full_dir}/opm-common")
-    endif()
-  endif()
-endif()
-if(opm-common_DIR AND NOT IS_DIRECTORY ${opm-common_DIR})
-  message(WARNING "Value ${opm-common_DIR} passed to variable"
-    " opm-common_DIR is not a directory")
-endif()
+# we want all features detected by the build system to be enabled,
+# thank you!
+dune_enable_all_packages()
 
-find_package(opm-common REQUIRED)
+# recursively mark all header files beneath the "ewoms" directory for
+# installation.
+ewoms_recusive_export_all_headers("ewoms")
 
-include(OpmInit)
+# this module is headers-only, i.e., it does not feature a library
+# which must be linked a against, so we skip this here
 
-# not the same location as most of the other projects; this hook overrides
-macro (dir_hook)
-endmacro (dir_hook)
+# add unit tests
+ewoms_add_test(test_blackoilfluidstate)
+ewoms_add_test(test_eclblackoilfluidsystem CONDITION ewoms-eclio_FOUND)
+ewoms_add_test(test_eclblackoilpvt CONDITION ewoms-eclio_FOUND)
+ewoms_add_test(test_eclmateriallawmanager CONDITION ewoms-eclio_FOUND)
+ewoms_add_test(test_fluidmatrixinteractions)
+ewoms_add_test(test_pengrobinson)
+ewoms_add_test(test_ncpflash)
+ewoms_add_test(test_tabulation)
+ewoms_add_test(test_components)
+ewoms_add_test(test_fluidsystems)
+ewoms_add_test(test_immiscibleflash)
 
-# project information is in dune.module. Read this file and set variables.
-# we cannot generate dune.module since it is read by dunecontrol before
-# the build starts, so it makes sense to keep the data there then.
-include (OpmInit)
-
-# list of prerequisites for this particular project; this is in a
-# separate file (in cmake/Modules sub-directory) because it is shared
-# with the find module
-include (${project}-prereqs)
-
-# read the list of components from this file (in the project directory);
-# it should set various lists with the names of the files to include
-include (CMakeLists_files.cmake)
-
-macro (config_hook)
-opm_need_version_of ("dune-common")
-endmacro (config_hook)
-
-macro (prereqs_hook)
-endmacro (prereqs_hook)
-
-macro (sources_hook)
-endmacro (sources_hook)
-
-macro (fortran_hook)
-endmacro (fortran_hook)
-
-macro (files_hook)
-endmacro (files_hook)
-
-macro (tests_hook)
-endmacro (tests_hook)
-
-# all setup common to the OPM library modules is done here
-include (OpmLibMain)
-
-add_custom_target(opm-material_prepare)
-
-opm_add_test(test_blackoilfluidstate)
-opm_add_test(test_ConditionalStorage)
-opm_add_test(test_eclblackoilfluidsystem CONDITION HAVE_ECL_INPUT)
-opm_add_test(test_eclblackoilpvt CONDITION HAVE_ECL_INPUT)
-opm_add_test(test_eclmateriallawmanager CONDITION HAVE_ECL_INPUT)
-opm_add_test(test_fluidmatrixinteractions)
-opm_add_test(test_pengrobinson)
-opm_add_test(test_densead)
-opm_add_test(test_ncpflash)
-opm_add_test(test_spline)
-opm_add_test(test_tabulation)
-opm_add_test(test_2dtables)
-opm_add_test(test_components)
-opm_add_test(test_fluidsystems)
-opm_add_test(test_immiscibleflash)
+# finalize the project, e.g. generate the config.h etc.
+finalize_ewoms_project()
