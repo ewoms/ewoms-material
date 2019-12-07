@@ -124,17 +124,6 @@ public:
 
         // copy the SATNUM grid property. in some cases this is not necessary, but it
         // should not require much memory anyway...
-#ifdef ENABLE_3DPROPS_TESTING
-        const auto& fp = eclState.fieldProps();
-        satnumRegionArray_ = fp.get<int>("SATNUM");
-        std::transform(satnumRegionArray_.begin(), satnumRegionArray_.end(), satnumRegionArray_.begin(), [](const int& satnum_value) { return satnum_value - 1; });
-
-        if (fp.has<double>("IMBNUM")) {
-            imbnumRegionArray_ = fp.get<int>("IMBNUM");
-            std::transform(imbnumRegionArray_.begin(), imbnumRegionArray_.end(), imbnumRegionArray_.begin(), [](const int& imbnum_value) { return imbnum_value - 1; });
-        } else
-            imbnumRegionArray_ = satnumRegionArray_;
-#else
         size_t numCompressedElems = compressedToCartesianElemIdx.size();
         satnumRegionArray_.resize(numCompressedElems);
         if (eclState.get3DProperties().hasDeckIntGridProperty("SATNUM")) {
@@ -157,7 +146,7 @@ public:
                 imbnumRegionArray_[elemIdx] = imbnumRawData[cartesianElemIdx] - 1;
             }
         }
-#endif
+
         readGlobalEpsOptions_(deck, eclState);
         readGlobalHysteresisOptions_(deck);
         readGlobalThreePhaseOptions_(deck);
@@ -462,7 +451,7 @@ private:
             throw std::runtime_error("At least one fluid phase must be enabled. (Is: "+std::to_string(numEnabled)+")");
         } else if (numEnabled == 1) {
             threePhaseApproach_ = Ewoms::EclMultiplexerApproach::EclOnePhaseApproach;
-        } else if ( numEnabled == 2) {
+        } else if (numEnabled == 2) {
             threePhaseApproach_ = Ewoms::EclTwoPhaseApproach;
             if (!gasEnabled)
                 twoPhaseApproach_ = Ewoms::EclTwoPhaseOilWater;
@@ -535,7 +524,7 @@ private:
             oilWaterScaledImbPointsVector.resize(numCompressedElems);
         }
 
-        EclEpsGridProperties epsGridProperties(eclState, false, compressedToCartesianElemIdx);
+        EclEpsGridProperties epsGridProperties(eclState, /*imbibition=*/false, compressedToCartesianElemIdx);
 
         for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
             readGasOilScaledPoints_(gasOilScaledInfoVector,
@@ -555,7 +544,7 @@ private:
         }
 
         if (enableHysteresis()) {
-            EclEpsGridProperties epsImbGridProperties(eclState, true, compressedToCartesianElemIdx);
+            EclEpsGridProperties epsImbGridProperties(eclState, /*imbibition=*/true, compressedToCartesianElemIdx);
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 readGasOilScaledPoints_(gasOilScaledImbInfoVector,
                                         gasOilScaledImbPointsVector,
@@ -734,7 +723,7 @@ private:
         if (!family1 && !family2)
             throw std::invalid_argument("Saturations function must be specified using either "
                                         "family 1 or family 2 keywords \n"
-                                        "Use either SGOF and SWOF or SGFN, SWFN and SOF3" );
+                                        "Use either SGOF and SWOF or SGFN, SWFN and SOF3");
 
         if (family1 && !family2)
             return SaturationFunctionFamily::FamilyI;
@@ -783,17 +772,17 @@ private:
 
         case FamilyII:
         {
-            const SgfnTable& sgfnTable = tableManager.getSgfnTables().getTable<SgfnTable>( satRegionIdx );
+            const SgfnTable& sgfnTable = tableManager.getSgfnTables().getTable<SgfnTable>(satRegionIdx);
             bool hasWater = deck.hasKeyword("WATER");
             if (!hasWater) {
                 // oil and gas case
-                const Sof2Table& sof2Table = tableManager.getSof2Tables().getTable<Sof2Table>( satRegionIdx );
+                const Sof2Table& sof2Table = tableManager.getSof2Tables().getTable<Sof2Table>(satRegionIdx);
                 readGasOilEffectiveParametersFamily2_(effParams,
                                                       Swco,
                                                       sof2Table,
                                                       sgfnTable);
             } else {
-                const Sof3Table& sof3Table = tableManager.getSof3Tables().getTable<Sof3Table>( satRegionIdx );
+                const Sof3Table& sof3Table = tableManager.getSof3Tables().getTable<Sof3Table>(satRegionIdx);
                 readGasOilEffectiveParametersFamily2_(effParams,
                                                       Swco,
                                                       sof3Table,
@@ -978,7 +967,7 @@ private:
                                  const EclEpsGridProperties& epsGridProperties,
                                  unsigned elemIdx)
     {
-        unsigned satRegionIdx = epsGridProperties.satRegion( elemIdx );
+        unsigned satRegionIdx = epsGridProperties.compressedSatnum[elemIdx] - 1;
 
         destInfo[elemIdx] = std::make_shared<EclEpsScalingPointsInfo<Scalar> >(unscaledEpsInfo_[satRegionIdx]);
         destInfo[elemIdx]->extractScaled(eclState, epsGridProperties, elemIdx);
@@ -995,7 +984,7 @@ private:
                                    const EclEpsGridProperties& epsGridProperties,
                                    unsigned elemIdx)
     {
-        unsigned satRegionIdx = epsGridProperties.satRegion( elemIdx );
+        unsigned satRegionIdx = epsGridProperties.compressedSatnum[elemIdx] - 1;
 
         destInfo[elemIdx] = std::make_shared<EclEpsScalingPointsInfo<Scalar> >(unscaledEpsInfo_[satRegionIdx]);
         destInfo[elemIdx]->extractScaled(eclState, epsGridProperties, elemIdx);

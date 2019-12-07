@@ -73,28 +73,21 @@ public:
                       const Ewoms::EclipseState& eclState,
                       const std::vector<int>& compressedToCartesianElemIdx)
     {
-#ifdef ENABLE_3DPROPS_TESTING
-        const auto& fp = eclState.fieldProps();
-        bool has_heatcr = fp.has<double>("HEATCR");
-        bool has_thconr = fp.has<double>("THCONR");
-        bool has_thc = fp.has<double>("THCROCK") || fp.has<double>("THCOIL") || fp.has<double>("THCGAS") || fp.has<double>("THCWATER");
-#else
         const auto& props = eclState.get3DProperties();
-        bool has_heatcr = props.hasDeckDoubleGridProperty("HEATCR");
-        bool has_thconr = props.hasDeckDoubleGridProperty("THCONR");
-        bool has_thc = props.hasDeckDoubleGridProperty("THCROCK") || props.hasDeckDoubleGridProperty("THCOIL") || props.hasDeckDoubleGridProperty("THCGAS") || props.hasDeckDoubleGridProperty("THCWATER");
-#endif
+        bool hasHeatcr = props.hasDeckDoubleGridProperty("HEATCR");
+        bool hasThconr = props.hasDeckDoubleGridProperty("THCONR");
+        bool hasThc = props.hasDeckDoubleGridProperty("THCROCK") || props.hasDeckDoubleGridProperty("THCOIL") || props.hasDeckDoubleGridProperty("THCGAS") || props.hasDeckDoubleGridProperty("THCWATER");
 
-        if (has_heatcr)
+        if (hasHeatcr)
             initHeatcr_(deck, eclState, compressedToCartesianElemIdx);
         else if (deck.hasKeyword("SPECROCK"))
             initSpecrock_(deck, eclState, compressedToCartesianElemIdx);
         else
             initNullRockEnergy_(deck, eclState, compressedToCartesianElemIdx);
 
-        if (has_thconr)
+        if (hasThconr)
             initThconr_(deck, eclState, compressedToCartesianElemIdx);
-        else if (has_thc)
+        else if (hasThc)
             initThc_(deck, eclState, compressedToCartesianElemIdx);
         else
             initNullCond_(deck, eclState, compressedToCartesianElemIdx);
@@ -154,15 +147,10 @@ private:
         // conservation. We set it anyway to faciliate comparisons with ECL
         HeatcrLawParams::setReferenceTemperature(FluidSystem::surfaceTemperature);
 
-#ifdef ENABLE_3DPROPS_TESTING
-        const auto& fp = eclState.fieldProps();
-        const std::vector<double>& heatcrData  = fp.get<double>("HEATCR");
-        const std::vector<double>& heatcrtData = fp.get<double>("HEATCRT");
-#else
         const auto& props = eclState.get3DProperties();
         const std::vector<double>& heatcrData = props.getDoubleGridProperty("HEATCR").getData();
         const std::vector<double>& heatcrtData = props.getDoubleGridProperty("HEATCRT").getData();
-#endif
+
         unsigned numElems = compressedToCartesianElemIdx.size();
         solidEnergyLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
@@ -170,14 +158,9 @@ private:
             elemParam.setSolidEnergyApproach(SolidEnergyLawParams::heatcrApproach);
             auto& heatcrElemParams = elemParam.template getRealParams<SolidEnergyLawParams::heatcrApproach>();
 
-#ifdef ENABLE_3DPROPS_TESTING
-            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[elemIdx]);
-            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[elemIdx]);
-#else
             int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
             heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[cartElemIdx]);
             heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[cartElemIdx]);
-#endif
             heatcrElemParams.finalize();
             elemParam.finalize();
         }
@@ -193,13 +176,6 @@ private:
         solidEnergyApproach_ = SolidEnergyLawParams::specrockApproach;
 
         // initialize the element index -> SATNUM index mapping
-#ifdef ENABLE_3DPROPS_TESTING
-        const auto& fp = eclState.fieldProps();
-        const auto& satnum = fp.get<int>("SATNUM");
-        elemToSatnumIdx_.resize(satnum.size());
-        for (std::size_t i = 0; i < satnum.size(); i++)
-            elemToSatnumIdx_[i] = satnum[i] - 1;
-#else
         const auto& props = eclState.get3DProperties();
         const std::vector<int>& satnumData = props.getIntGridProperty("SATNUM").getData();
         elemToSatnumIdx_.resize(compressedToCartesianElemIdx.size());
@@ -210,7 +186,7 @@ private:
             // of 0!
             elemToSatnumIdx_[elemIdx] = satnumData[cartesianElemIdx] - 1;
         }
-#endif
+
         // internalize the SPECROCK table
         unsigned numSatRegions = eclState.runspec().tabdims().getNumSatTables();
         const auto& tableManager = eclState.getTableManager();
@@ -254,15 +230,10 @@ private:
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thconrApproach;
 
-#ifdef  ENABLE_3DPROPS_TESTING
-        const auto& fp = eclState.fieldProps();
-        const std::vector<double>& thconrData  = fp.get<double>("THCONR");
-        const std::vector<double>& thconsfData = fp.get<double>("THCONSF");
-#else
         const auto& props = eclState.get3DProperties();
         const std::vector<double>& thconrData = props.getDoubleGridProperty("THCONR").getData();
         const std::vector<double>& thconsfData = props.getDoubleGridProperty("THCONSF").getData();
-#endif
+
         unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
@@ -270,14 +241,9 @@ private:
             elemParams.setThermalConductionApproach(ThermalConductionLawParams::thconrApproach);
             auto& thconrElemParams = elemParams.template getRealParams<ThermalConductionLawParams::thconrApproach>();
 
-#ifdef ENABLE_3DPROPS_TESTING
-            thconrElemParams.setReferenceTotalThermalConductivity(thconrData[elemIdx]);
-            thconrElemParams.setDTotalThermalConductivity_dSg(thconsfData[elemIdx]);
-#else
             int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
             thconrElemParams.setReferenceTotalThermalConductivity(thconrData[cartElemIdx]);
             thconrElemParams.setDTotalThermalConductivity_dSg(thconsfData[cartElemIdx]);
-#endif
 
             thconrElemParams.finalize();
             elemParams.finalize();
@@ -293,21 +259,13 @@ private:
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thcApproach;
 
-#ifdef ENABLE_3DPROPS_TESTING
-        const auto& fp = eclState.fieldProps();
-        const std::vector<double>& thcrockData = fp.get<double>("THCROCK");
-        const std::vector<double>& thcoilData = fp.get<double>("THCOIL");
-        const std::vector<double>& thcgasData = fp.get<double>("THCGAS");
-        const std::vector<double>& thcwaterData = fp.get<double>("THCWATER");
-        const std::vector<double>& poroData = fp.get<double>("PORO");
-#else
         const auto& props = eclState.get3DProperties();
         const std::vector<double>& thcrockData = props.getDoubleGridProperty("THCROCK").getData();
         const std::vector<double>& thcoilData = props.getDoubleGridProperty("THCOIL").getData();
         const std::vector<double>& thcgasData = props.getDoubleGridProperty("THCGAS").getData();
         const std::vector<double>& thcwaterData = props.getDoubleGridProperty("THCWATER").getData();
         const std::vector<double>& poroData = props.getDoubleGridProperty("PORO").getData();
-#endif
+
         unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
@@ -315,20 +273,12 @@ private:
             elemParams.setThermalConductionApproach(ThermalConductionLawParams::thcApproach);
             auto& thcElemParams = elemParams.template getRealParams<ThermalConductionLawParams::thcApproach>();
 
-#ifdef ENABLE_3DPROPS_TESTING
-            thcElemParams.setPorosity(poroData[elemIdx]);
-            thcElemParams.setThcrock(thcrockData[elemIdx]);
-            thcElemParams.setThcoil(thcoilData[elemIdx]);
-            thcElemParams.setThcgas(thcgasData[elemIdx]);
-            thcElemParams.setThcwater(thcwaterData[elemIdx]);
-#else
             int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
             thcElemParams.setPorosity(poroData[cartElemIdx]);
             thcElemParams.setThcrock(thcrockData[cartElemIdx]);
             thcElemParams.setThcoil(thcoilData[cartElemIdx]);
             thcElemParams.setThcgas(thcgasData[cartElemIdx]);
             thcElemParams.setThcwater(thcwaterData[cartElemIdx]);
-#endif
 
             thcElemParams.finalize();
             elemParams.finalize();

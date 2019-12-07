@@ -234,11 +234,6 @@ struct EclEpsScalingPointsInfo
         pcgoLeverettFactor = 1.0;
     }
 
-    void update(Scalar& targetValue, const double * value_ptr) {
-        if (value_ptr)
-            targetValue = *value_ptr;
-    }
-
     /*!
      * \brief Extract the values of the scaled scaling parameters.
      *
@@ -250,22 +245,22 @@ struct EclEpsScalingPointsInfo
     {
         // overwrite the unscaled values with the values for the cell if it is
         // explicitly specified by the corresponding keyword.
-        update(Swl,     epsProperties.swl(activeIndex));
-        update(Sgl,     epsProperties.sgl(activeIndex));
-        update(Swcr,    epsProperties.swcr(activeIndex));
-        update(Sgcr,    epsProperties.sgcr(activeIndex));
+        extractGridPropertyValue_(Swl, epsProperties.compressedSwl, activeIndex);
+        extractGridPropertyValue_(Sgl, epsProperties.compressedSgl, activeIndex);
+        extractGridPropertyValue_(Swcr, epsProperties.compressedSwcr, activeIndex);
+        extractGridPropertyValue_(Sgcr, epsProperties.compressedSgcr, activeIndex);
 
-        update(Sowcr,   epsProperties.sowcr(activeIndex));
-        update(Sogcr,   epsProperties.sogcr(activeIndex));
-        update(Swu,     epsProperties.swu(activeIndex));
-        update(Sgu,     epsProperties.sgu(activeIndex));
-        update(maxPcow, epsProperties.pcw(activeIndex));
-        update(maxPcgo, epsProperties.pcg(activeIndex));
-        update(maxKrw,  epsProperties.krw(activeIndex));
-        update(maxKrg,  epsProperties.krg(activeIndex));
+        extractGridPropertyValue_(Sowcr, epsProperties.compressedSowcr, activeIndex);
+        extractGridPropertyValue_(Sogcr, epsProperties.compressedSogcr, activeIndex);
+        extractGridPropertyValue_(Swu, epsProperties.compressedSwu, activeIndex);
+        extractGridPropertyValue_(Sgu, epsProperties.compressedSgu, activeIndex);
+        extractGridPropertyValue_(maxPcow, epsProperties.compressedPcw, activeIndex);
+        extractGridPropertyValue_(maxPcgo, epsProperties.compressedPcg, activeIndex);
+        extractGridPropertyValue_(maxKrw, epsProperties.compressedKrw, activeIndex);
+        extractGridPropertyValue_(maxKrg, epsProperties.compressedKrg, activeIndex);
         // quite likely that's wrong!
-        update(maxKrow, epsProperties.kro(activeIndex));
-        update(maxKrog, epsProperties.kro(activeIndex));
+        extractGridPropertyValue_(maxKrow, epsProperties.compressedKro, activeIndex);
+        extractGridPropertyValue_(maxKrog, epsProperties.compressedKro, activeIndex);
 
         // compute the Leverett capillary pressure scaling factors if applicable.  note
         // that this needs to be done using non-SI units to make it correspond to the
@@ -278,28 +273,29 @@ struct EclEpsScalingPointsInfo
 
             Scalar perm;
             if (jfuncDir == Ewoms::JFunc::Direction::X)
-                perm = epsProperties.permx(activeIndex);
+                perm = epsProperties.compressedPermx[activeIndex];
             else if (jfuncDir == Ewoms::JFunc::Direction::Y)
-                perm = epsProperties.permy(activeIndex);
+                perm = epsProperties.compressedPermy[activeIndex];
             else if (jfuncDir == Ewoms::JFunc::Direction::Z)
-                perm = epsProperties.permz(activeIndex);
+                perm = epsProperties.compressedPermz[activeIndex];
             else if (jfuncDir == Ewoms::JFunc::Direction::XY)
+            {
                 // TODO: verify that this really is the arithmetic mean. (the
                 // documentation just says that the "average" should be used, IMO the
                 // harmonic mean would be more appropriate because that's what's usually
                 // applied when calculating the fluxes.)
-            {
-                double permx = epsProperties.permx(activeIndex);
-                double permy = epsProperties.permy(activeIndex);
+                double permx = epsProperties.compressedPermx[activeIndex];
+                double permy = epsProperties.compressedPermy[activeIndex];
                 perm = Ewoms::arithmeticMean(permx, permy);
-            } else
+            }
+            else
                 throw std::runtime_error("Illegal direction indicator for the JFUNC "
                                          "keyword ("+std::to_string(int(jfuncDir))+")");
 
             // convert permeability from m^2 to mD
             perm *= 1.01325e15;
 
-            Scalar poro = epsProperties.poro(activeIndex);
+            Scalar poro = epsProperties.compressedPoro[activeIndex];
             Scalar alpha = jfunc.alphaFactor();
             Scalar beta = jfunc.betaFactor();
 
@@ -560,13 +556,13 @@ private:
 #endif // HAVE_ECL_INPUT
 
     void extractGridPropertyValue_(Scalar& targetValue,
-                                   const std::vector<double>* propData,
-                                   unsigned cartesianCellIdx)
+                                   const std::vector<double>& propData,
+                                   unsigned activeCellIdx)
     {
-        if (!propData)
+        if (propData.empty())
             return;
 
-        targetValue = (*propData)[cartesianCellIdx];
+        targetValue = propData[activeCellIdx];
     }
 };
 

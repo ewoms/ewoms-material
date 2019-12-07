@@ -624,8 +624,8 @@ private:
         }
 
         //Prune duplicate Rv values (can occur, and will cause problems in further interpolation)
-        auto x_coord_comparator = [](const Pair& a, const Pair& b) { return a.first == b.first; };
-        auto last = std::unique(pSatSamplePoints.begin(), pSatSamplePoints.end(), x_coord_comparator);
+        auto xCoordComparator = [](const Pair& a, const Pair& b) { return a.first == b.first; };
+        auto last = std::unique(pSatSamplePoints.begin(), pSatSamplePoints.end(), xCoordComparator);
         pSatSamplePoints.erase(last, pSatSamplePoints.end());
 
         saturationPressure_[regionIdx].setContainerOfTuples(pSatSamplePoints);
