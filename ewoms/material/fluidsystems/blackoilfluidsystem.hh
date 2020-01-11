@@ -48,6 +48,7 @@ namespace Ewoms {
 namespace BlackOil {
 EWOMS_GENERATE_HAS_MEMBER(Rs, ) // Creates 'HasMember_Rs<T>'.
 EWOMS_GENERATE_HAS_MEMBER(Rv, ) // Creates 'HasMember_Rv<T>'.
+EWOMS_GENERATE_HAS_MEMBER(saltConcentration, )
 
 template <class FluidSystem, class FluidState, class LhsEval>
 LhsEval getRs_(typename std::enable_if<!HasMember_Rs<FluidState>::value, const FluidState&>::type fluidState,
@@ -78,6 +79,17 @@ auto getRv_(typename std::enable_if<HasMember_Rv<FluidState>::value, const Fluid
             unsigned regionIdx EWOMS_UNUSED)
     -> decltype(Ewoms::decay<LhsEval>(fluidState.Rv()))
 { return Ewoms::decay<LhsEval>(fluidState.Rv()); }
+
+template <class FluidSystem, class FluidState, class LhsEval>
+LhsEval getSaltConcentration_(typename std::enable_if<!HasMember_saltConcentration<FluidState>::value, const FluidState&>::type fluidState,
+               unsigned regionIdx)
+{return 0.0;}
+
+template <class FluidSystem, class FluidState, class LhsEval>
+auto getSaltConcentration_(typename std::enable_if<HasMember_saltConcentration<FluidState>::value, const FluidState&>::type fluidState,
+            unsigned regionIdx EWOMS_UNUSED)
+    -> decltype(Ewoms::decay<LhsEval>(fluidState.saltConcentration()))
+{ return Ewoms::decay<LhsEval>(fluidState.saltConcentration()); }
 
 }
 

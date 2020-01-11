@@ -190,10 +190,11 @@ public:
     template <class Evaluation>
     Evaluation viscosity(unsigned regionIdx,
                          const Evaluation& temperature,
-                         const Evaluation& pressure) const
+                         const Evaluation& pressure,
+                         const Evaluation& saltconcentration) const
     {
         Scalar BwMuwRef = waterViscosity_[regionIdx]*waterReferenceFormationVolumeFactor_[regionIdx];
-        const Evaluation& bw = inverseFormationVolumeFactor(regionIdx, temperature, pressure);
+        const Evaluation& bw = inverseFormationVolumeFactor(regionIdx, temperature, pressure, saltconcentration);
 
         Scalar pRef = waterReferencePressure_[regionIdx];
         const Evaluation& Y =
@@ -208,7 +209,8 @@ public:
     template <class Evaluation>
     Evaluation inverseFormationVolumeFactor(unsigned regionIdx,
                                             const Evaluation& /*temperature*/,
-                                            const Evaluation& pressure) const
+                                            const Evaluation& pressure,
+                                            const Evaluation& /*saltconcentration*/) const
     {
         // cf. ECLIPSE 2011 technical description, p. 116
         Scalar pRef = waterReferencePressure_[regionIdx];
