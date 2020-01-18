@@ -60,45 +60,51 @@ namespace Ewoms {
 class EclEpsGridProperties
 {
 public:
+    // extract the field properties for required to initialize the ECL-style fluid-matrix
+    // interactions. note that for this, the EclipseState's fieldProps must exhibit the
+    // correct set of active set (confer FieldPropsManager::reset_actnum())
     EclEpsGridProperties(const Ewoms::EclipseState& eclState,
                          bool useImbibition,
                          const std::vector<int>& compressedToCartesianElemIdx)
     {
         std::string kwPrefix = useImbibition?"I":"";
 
-        const auto& ecl3dProps = eclState.get3DProperties();
+        const auto& fieldProps = eclState.fieldProps();
 
         if (useImbibition)
-            compressedSatnum = std::move(createCompressedPropertyData_(ecl3dProps.getIntGridProperty("IMBNUM").getData(), compressedToCartesianElemIdx));
+            compressedSatnum = fieldProps.get_copy<int>("IMBNUM");
         else
-            compressedSatnum = std::move(createCompressedPropertyData_(ecl3dProps.getIntGridProperty("SATNUM").getData(), compressedToCartesianElemIdx));
+            compressedSatnum = fieldProps.get_copy<int>("SATNUM");
 
-        compressedSwl = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SWL", compressedToCartesianElemIdx));
-        compressedSgl = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SGL", compressedToCartesianElemIdx));
-        compressedSwcr = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SWCR", compressedToCartesianElemIdx));
-        compressedSgcr = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SGCR", compressedToCartesianElemIdx));
-        compressedSowcr = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SOWCR", compressedToCartesianElemIdx));
-        compressedSogcr = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SOGCR", compressedToCartesianElemIdx));
-        compressedSwu = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SWU", compressedToCartesianElemIdx));
-        compressedSgu = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"SGU", compressedToCartesianElemIdx));
-        compressedPcw = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"PCW", compressedToCartesianElemIdx));
-        compressedPcg = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"PCG", compressedToCartesianElemIdx));
-        compressedKrw = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"KRW", compressedToCartesianElemIdx));
-        compressedKro = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"KRO", compressedToCartesianElemIdx));
-        compressedKrg = std::move(retrieveCompressedPropertyData_(ecl3dProps, kwPrefix+"KRG", compressedToCartesianElemIdx));
+        compressedSwl = fieldProps.get_copy<double>(kwPrefix+"SWL");
+        compressedSgl = fieldProps.get_copy<double>(kwPrefix+"SGL");
+        compressedSwcr = fieldProps.get_copy<double>(kwPrefix+"SWCR");
+        compressedSgcr = fieldProps.get_copy<double>(kwPrefix+"SGCR");
+        compressedSowcr = fieldProps.get_copy<double>(kwPrefix+"SOWCR");
+        compressedSogcr = fieldProps.get_copy<double>(kwPrefix+"SOGCR");
+        compressedSwu = fieldProps.get_copy<double>(kwPrefix+"SWU");
+        compressedSgu = fieldProps.get_copy<double>(kwPrefix+"SGU");
+        compressedPcw = fieldProps.get_copy<double>(kwPrefix+"PCW");
+        compressedPcg = fieldProps.get_copy<double>(kwPrefix+"PCG");
+        compressedKrw = fieldProps.get_copy<double>(kwPrefix+"KRW");
+        compressedKro = fieldProps.get_copy<double>(kwPrefix+"KRO");
+        compressedKrg = fieldProps.get_copy<double>(kwPrefix+"KRG");
 
         // _may_ be needed to calculate the Leverett capillary pressure scaling factor
-        compressedPoro = std::move(retrieveCompressedPropertyData_(ecl3dProps, "PORO", compressedToCartesianElemIdx));
+        compressedPoro = fieldProps.get_copy<double>("PORO");
 
-        compressedPermx = std::move(createCompressedPropertyData_(ecl3dProps.getDoubleGridProperty("PERMX").getData(), compressedToCartesianElemIdx));
+        if (fieldProps.has<double>("PERMX"))
+            compressedPermx = fieldProps.get_copy<double>("PERMX");
+        else
+            compressedPermx.clear();
 
-        if (ecl3dProps.hasDeckDoubleGridProperty("PERMY"))
-            compressedPermy = std::move(createCompressedPropertyData_(ecl3dProps.getDoubleGridProperty("PERMY").getData(), compressedToCartesianElemIdx));
+        if (fieldProps.has<double>("PERMY"))
+            compressedPermy = fieldProps.get_copy<double>("PERMY");
         else
             compressedPermy = compressedPermx;
 
-        if (ecl3dProps.hasDeckDoubleGridProperty("PERMZ"))
-            compressedPermz = std::move(createCompressedPropertyData_(ecl3dProps.getDoubleGridProperty("PERMZ").getData(), compressedToCartesianElemIdx));
+        if (fieldProps.has<double>("PERMZ"))
+            compressedPermz = fieldProps.get_copy<double>("PERMZ");
         else
             compressedPermz = compressedPermx;
     }
@@ -122,39 +128,6 @@ public:
     std::vector<double> compressedPermy;
     std::vector<double> compressedPermz;
     std::vector<double> compressedPoro;
-
-private:
-    // given the data of a ECL grid property in a logically Cartesian grid, return the
-    // array for corresponding "compressed" field (i.e., for the grid where inactive
-    // cells are removed).
-    template <typename FieldType>
-    std::vector<FieldType>
-    createCompressedPropertyData_(const std::vector<FieldType>& cartesianPropertyData,
-                                  const std::vector<int>& compressedToCartesianElemIdx)
-    {
-        std::vector<FieldType> compressedPropertyData(compressedToCartesianElemIdx.size());
-
-        for (size_t activeIdx = 0; activeIdx < compressedToCartesianElemIdx.size(); activeIdx++) {
-            auto cartesianIdx = compressedToCartesianElemIdx[activeIdx];
-            compressedPropertyData[activeIdx] = cartesianPropertyData[cartesianIdx];
-        }
-
-        return compressedPropertyData;
-    }
-
-    // check if a given ECL grid property exists and if it does, create and return a
-    // compressed copy of it
-    std::vector<double>
-    retrieveCompressedPropertyData_(const Eclipse3DProperties& props,
-                                    const std::string& keyword,
-                                    const std::vector<int>& compressedToCartesianElemIdx)
-    {
-        if (props.hasDeckDoubleGridProperty(keyword))
-            return std::move(createCompressedPropertyData_(props.getDoubleGridProperty(keyword).getData(),
-                                                           compressedToCartesianElemIdx));
-
-        return std::move(std::vector<double>());
-    }
 };
 
 } // namespace Ewoms

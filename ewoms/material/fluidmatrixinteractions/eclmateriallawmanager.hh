@@ -126,8 +126,8 @@ public:
         // should not require much memory anyway...
         size_t numCompressedElems = compressedToCartesianElemIdx.size();
         satnumRegionArray_.resize(numCompressedElems);
-        if (eclState.get3DProperties().hasDeckIntGridProperty("SATNUM")) {
-            const auto& satnumRawData = eclState.get3DProperties().getIntGridProperty("SATNUM").getData();
+        if (eclState.fieldProps().has<int>("SATNUM")) {
+            const auto& satnumRawData = eclState.fieldProps().get_global<int>("SATNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 unsigned cartesianElemIdx = static_cast<unsigned>(compressedToCartesianElemIdx[elemIdx]);
                 satnumRegionArray_[elemIdx] = satnumRawData[cartesianElemIdx] - 1;
@@ -139,8 +139,8 @@ public:
         // create the information for the imbibition region (IMBNUM). By default this is
         // the same as the saturation region (SATNUM)
         imbnumRegionArray_ = satnumRegionArray_;
-        if (eclState.get3DProperties().hasDeckIntGridProperty("IMBNUM")) {
-            const auto& imbnumRawData = eclState.get3DProperties().getIntGridProperty("IMBNUM").getData();
+        if (eclState.fieldProps().has<int>("IMBNUM")) {
+            const auto& imbnumRawData = eclState.fieldProps().get_global<int>("IMBNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 int cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
                 imbnumRegionArray_[elemIdx] = imbnumRawData[cartesianElemIdx] - 1;
@@ -447,11 +447,11 @@ private:
             + (oilEnabled?1:0)
             + (waterEnabled?1:0);
 
-        if (numEnabled == 0) {
+        if (numEnabled == 0)
             throw std::runtime_error("At least one fluid phase must be enabled. (Is: "+std::to_string(numEnabled)+")");
-        } else if (numEnabled == 1) {
+        else if (numEnabled == 1)
             threePhaseApproach_ = Ewoms::EclMultiplexerApproach::EclOnePhaseApproach;
-        } else if (numEnabled == 2) {
+        else if (numEnabled == 2) {
             threePhaseApproach_ = Ewoms::EclTwoPhaseApproach;
             if (!gasEnabled)
                 twoPhaseApproach_ = Ewoms::EclTwoPhaseOilWater;

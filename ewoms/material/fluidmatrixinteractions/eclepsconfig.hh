@@ -155,7 +155,6 @@ public:
     bool enableLeverettScaling() const
     { return enableLeverettScaling_; }
 
-#if HAVE_ECL_INPUT
     /*!
      * \brief Reads all relevant material parameters form a cell of a parsed ECL deck.
      *
@@ -200,17 +199,18 @@ public:
             }
         }
 
-        auto& props = eclState.get3DProperties();
+        const auto& fieldProps = eclState.fieldProps();
         // check if we are supposed to scale the Y axis of the capillary pressure
         if (twoPhaseSystemType == EclOilWaterSystem) {
-            enableKrnScaling_ = props.hasDeckDoubleGridProperty("KRO");
-            enableKrwScaling_ = props.hasDeckDoubleGridProperty("KRW");
-            enablePcScaling_  = props.hasDeckDoubleGridProperty("PCW") || props.hasDeckDoubleGridProperty("SWATINIT");
-        } else {
+            enableKrnScaling_ = fieldProps.has<double>("KRO");
+            enableKrwScaling_ = fieldProps.has<double>("KRW");
+            enablePcScaling_  = fieldProps.has<double>("PCW") || fieldProps.has<double>("SWATINIT");
+        }
+        else {
             assert(twoPhaseSystemType == EclGasOilSystem);
-            enableKrnScaling_ = props.hasDeckDoubleGridProperty("KRG");
-            enableKrwScaling_ = props.hasDeckDoubleGridProperty("KRO");
-            enablePcScaling_  = props.hasDeckDoubleGridProperty("PCG");
+            enableKrnScaling_ = fieldProps.has<double>("KRG");
+            enableKrwScaling_ = fieldProps.has<double>("KRO");
+            enablePcScaling_  = fieldProps.has<double>("PCG");
         }
 
         if (enablePcScaling_ && enableLeverettScaling_)
@@ -219,7 +219,6 @@ public:
                                      "JFUNC keyword applies to the water phase.");
 
     }
-#endif
 
 private:
     // enable scaling of the input saturations (i.e., rescale the x-Axis)

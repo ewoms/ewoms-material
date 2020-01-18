@@ -73,10 +73,14 @@ public:
                       const Ewoms::EclipseState& eclState,
                       const std::vector<int>& compressedToCartesianElemIdx)
     {
-        const auto& props = eclState.get3DProperties();
-        bool hasHeatcr = props.hasDeckDoubleGridProperty("HEATCR");
-        bool hasThconr = props.hasDeckDoubleGridProperty("THCONR");
-        bool hasThc = props.hasDeckDoubleGridProperty("THCROCK") || props.hasDeckDoubleGridProperty("THCOIL") || props.hasDeckDoubleGridProperty("THCGAS") || props.hasDeckDoubleGridProperty("THCWATER");
+        const auto& fieldProps = eclState.fieldProps();
+        bool hasHeatcr = fieldProps.has<double>("HEATCR");
+        bool hasThconr = fieldProps.has<double>("THCONR");
+        bool hasThc =
+            fieldProps.has<double>("THCROCK")
+            || fieldProps.has<double>("THCOIL")
+            || fieldProps.has<double>("THCGAS")
+            || fieldProps.has<double>("THCWATER");
 
         if (hasHeatcr)
             initHeatcr_(deck, eclState, compressedToCartesianElemIdx);
@@ -147,10 +151,9 @@ private:
         // conservation. We set it anyway to faciliate comparisons with ECL
         HeatcrLawParams::setReferenceTemperature(FluidSystem::surfaceTemperature);
 
-        const auto& props = eclState.get3DProperties();
-        const std::vector<double>& heatcrData = props.getDoubleGridProperty("HEATCR").getData();
-        const std::vector<double>& heatcrtData = props.getDoubleGridProperty("HEATCRT").getData();
-
+        const auto& fieldProps = eclState.fieldProps();
+        const std::vector<double>& heatcrData  = fieldProps.get_global<double>("HEATCR");
+        const std::vector<double>& heatcrtData = fieldProps.get_global<double>("HEATCRT");
         unsigned numElems = compressedToCartesianElemIdx.size();
         solidEnergyLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
@@ -158,9 +161,8 @@ private:
             elemParam.setSolidEnergyApproach(SolidEnergyLawParams::heatcrApproach);
             auto& heatcrElemParams = elemParam.template getRealParams<SolidEnergyLawParams::heatcrApproach>();
 
-            int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
-            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[cartElemIdx]);
-            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[cartElemIdx]);
+            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[elemIdx]);
+            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[elemIdx]);
             heatcrElemParams.finalize();
             elemParam.finalize();
         }
@@ -176,8 +178,8 @@ private:
         solidEnergyApproach_ = SolidEnergyLawParams::specrockApproach;
 
         // initialize the element index -> SATNUM index mapping
-        const auto& props = eclState.get3DProperties();
-        const std::vector<int>& satnumData = props.getIntGridProperty("SATNUM").getData();
+        const auto& fieldProps = eclState.fieldProps();
+        const std::vector<int>& satnumData = fieldProps.get_global<int>("SATNUM");
         elemToSatnumIdx_.resize(compressedToCartesianElemIdx.size());
         for (unsigned elemIdx = 0; elemIdx < compressedToCartesianElemIdx.size(); ++ elemIdx) {
             unsigned cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
@@ -186,7 +188,6 @@ private:
             // of 0!
             elemToSatnumIdx_[elemIdx] = satnumData[cartesianElemIdx] - 1;
         }
-
         // internalize the SPECROCK table
         unsigned numSatRegions = eclState.runspec().tabdims().getNumSatTables();
         const auto& tableManager = eclState.getTableManager();
@@ -230,9 +231,15 @@ private:
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thconrApproach;
 
-        const auto& props = eclState.get3DProperties();
-        const std::vector<double>& thconrData = props.getDoubleGridProperty("THCONR").getData();
-        const std::vector<double>& thconsfData = props.getDoubleGridProperty("THCONSF").getData();
+        const auto& fieldProps = eclState.fieldProps();
+        auto globalSize = eclState.getInputGrid().getCartesianSize();
+        std::vector<double> thconrData(globalSize, 0);
+        std::vector<double> thconsfData(globalSize, 0);
+        if (fieldProps.has<double>("THCONR"))
+            thconrData  = fieldProps.get_global<double>("THCONR");
+
+        if (fieldProps.has<double>("THCONSF"))
+            thconsfData = fieldProps.get_global<double>("THCONSF");
 
         unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
@@ -259,12 +266,26 @@ private:
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thcApproach;
 
-        const auto& props = eclState.get3DProperties();
-        const std::vector<double>& thcrockData = props.getDoubleGridProperty("THCROCK").getData();
-        const std::vector<double>& thcoilData = props.getDoubleGridProperty("THCOIL").getData();
-        const std::vector<double>& thcgasData = props.getDoubleGridProperty("THCGAS").getData();
-        const std::vector<double>& thcwaterData = props.getDoubleGridProperty("THCWATER").getData();
-        const std::vector<double>& poroData = props.getDoubleGridProperty("PORO").getData();
+        const auto& fieldProps = eclState.fieldProps();
+        auto globalSize = eclState.getInputGrid().getCartesianSize();
+        std::vector<double> thcrockData(globalSize,0);
+        std::vector<double> thcoilData(globalSize,0);
+        std::vector<double> thcgasData(globalSize,0);
+        std::vector<double> thcwaterData = fieldProps.get_global<double>("THCWATER");
+
+        if (fieldProps.has<double>("THCROCK"))
+            thcrockData = fieldProps.get_global<double>("THCROCK");
+
+        if (fieldProps.has<double>("THCOIL"))
+            thcoilData = fieldProps.get_global<double>("THCOIL");
+
+        if (fieldProps.has<double>("THCGAS"))
+            thcgasData = fieldProps.get_global<double>("THCGAS");
+
+        if (fieldProps.has<double>("THCWATER"))
+            thcwaterData = fieldProps.get_global<double>("THCWATER");
+
+        const std::vector<double>& poroData = fieldProps.get_global<double>("PORO");
 
         unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
