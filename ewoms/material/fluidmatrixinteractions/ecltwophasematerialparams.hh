@@ -34,7 +34,7 @@
 #include <ewoms/material/common/ensurefinalized.hh>
 
 namespace Ewoms {
-enum EclTwoPhaseApproach {
+enum class EclTwoPhaseApproach {
     EclTwoPhaseGasOil,
     EclTwoPhaseOilWater,
     EclTwoPhaseGasWater

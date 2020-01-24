@@ -34,7 +34,6 @@
 #include <ewoms/eclio/parser/deck/deck.hh>
 #include <ewoms/eclio/parser/deck/deckrecord.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
-#include <ewoms/eclio/parser/eclipsestate/grid/gridproperty.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/sgfntable.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/sgoftable.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/slgoftable.hh>
@@ -100,6 +99,31 @@ struct EclEpsScalingPointsInfo
     Scalar maxKrow; // maximum relative permability of oil in the oil-water system
     Scalar maxKrog; // maximum relative permability of oil in the gas-oil system
     Scalar maxKrg; // maximum relative permability of gas
+
+    bool operator==(const EclEpsScalingPointsInfo<Scalar>& data) const
+    {
+        return Swl == data.Swl &&
+               Sgl == data.Sgl &&
+               Sowl == data.Sowl &&
+               Sogl == data.Sogl &&
+               krCriticalEps == data.krCriticalEps &&
+               Swcr == data.Swcr &&
+               Sgcr == data.Sgcr &&
+               Sowcr == data.Sowcr &&
+               Sogcr == data.Sogcr &&
+               Swu == data.Swu &&
+               Sgu == data.Sgu &&
+               Sowu == data.Sowu &&
+               Sogu == data.Sogu &&
+               maxPcow == data.maxPcow &&
+               maxPcgo == data.maxPcgo &&
+               pcowLeverettFactor == data.pcowLeverettFactor &&
+               pcgoLeverettFactor == data.pcgoLeverettFactor &&
+               maxKrw == data.maxKrw &&
+               maxKrow == data.maxKrow &&
+               maxKrog == data.maxKrog &&
+               maxKrg == data.maxKrg;
+    }
 
     void print() const
     {

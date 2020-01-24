@@ -32,7 +32,6 @@
 #include <ewoms/eclio/parser/deck/deck.hh>
 #include <ewoms/eclio/parser/deck/deckrecord.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
-#include <ewoms/eclio/parser/eclipsestate/grid/gridproperty.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/sgfntable.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/sgoftable.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/slgoftable.hh>
