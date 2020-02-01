@@ -69,32 +69,32 @@ public:
         thermalConductivityApproach_ = ThermalConductionLawParams::undefinedApproach;
     }
 
-    void initFromDeck(const Ewoms::Deck& deck,
-                      const Ewoms::EclipseState& eclState,
-                      const std::vector<int>& compressedToCartesianElemIdx)
+    void initParamsForElements(const Ewoms::EclipseState& eclState,
+                               const std::vector<int>& compressedToCartesianElemIdx)
     {
         const auto& fieldProps = eclState.fieldProps();
-        bool hasHeatcr = fieldProps.has<double>("HEATCR");
-        bool hasThconr = fieldProps.has<double>("THCONR");
+        const auto& tableManager = eclState.getTableManager();
+        bool hasHeatcr = fieldProps.has_double("HEATCR");
+        bool hasThconr = fieldProps.has_double("THCONR");
         bool hasThc =
-            fieldProps.has<double>("THCROCK")
-            || fieldProps.has<double>("THCOIL")
-            || fieldProps.has<double>("THCGAS")
-            || fieldProps.has<double>("THCWATER");
+            fieldProps.has_double("THCROCK")
+            || fieldProps.has_double("THCOIL")
+            || fieldProps.has_double("THCGAS")
+            || fieldProps.has_double("THCWATER");
 
         if (hasHeatcr)
-            initHeatcr_(deck, eclState, compressedToCartesianElemIdx);
-        else if (deck.hasKeyword("SPECROCK"))
-            initSpecrock_(deck, eclState, compressedToCartesianElemIdx);
+            initHeatcr_(eclState, compressedToCartesianElemIdx);
+        else if (tableManager.hasTables("SPECROCK"))
+            initSpecrock_(eclState, compressedToCartesianElemIdx);
         else
-            initNullRockEnergy_(deck, eclState, compressedToCartesianElemIdx);
+            initNullRockEnergy_();
 
         if (hasThconr)
-            initThconr_(deck, eclState, compressedToCartesianElemIdx);
+            initThconr_(eclState, compressedToCartesianElemIdx);
         else if (hasThc)
-            initThc_(deck, eclState, compressedToCartesianElemIdx);
+            initThc_(eclState, compressedToCartesianElemIdx);
         else
-            initNullCond_(deck, eclState, compressedToCartesianElemIdx);
+            initNullCond_();
     }
 
     const SolidEnergyLawParams& solidEnergyLawParams(unsigned elemIdx) const
@@ -142,8 +142,7 @@ private:
     /*!
      * \brief Initialize the parameters for the solid energy law using using HEATCR and friends.
      */
-    void initHeatcr_(const Ewoms::Deck& deck EWOMS_UNUSED,
-                     const Ewoms::EclipseState& eclState,
+    void initHeatcr_(const Ewoms::EclipseState& eclState,
                      const std::vector<int>& compressedToCartesianElemIdx)
     {
         solidEnergyApproach_ = SolidEnergyLawParams::heatcrApproach;
@@ -152,8 +151,8 @@ private:
         HeatcrLawParams::setReferenceTemperature(FluidSystem::surfaceTemperature);
 
         const auto& fieldProps = eclState.fieldProps();
-        const std::vector<double>& heatcrData  = fieldProps.get_global<double>("HEATCR");
-        const std::vector<double>& heatcrtData = fieldProps.get_global<double>("HEATCRT");
+        const std::vector<double>& heatcrData  = fieldProps.get_global_double("HEATCR");
+        const std::vector<double>& heatcrtData = fieldProps.get_global_double("HEATCRT");
         unsigned numElems = compressedToCartesianElemIdx.size();
         solidEnergyLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
@@ -171,15 +170,14 @@ private:
     /*!
      * \brief Initialize the parameters for the solid energy law using using SPECROCK and friends.
      */
-    void initSpecrock_(const Ewoms::Deck& deck EWOMS_UNUSED,
-                       const Ewoms::EclipseState& eclState,
+    void initSpecrock_(const Ewoms::EclipseState& eclState,
                        const std::vector<int>& compressedToCartesianElemIdx)
     {
         solidEnergyApproach_ = SolidEnergyLawParams::specrockApproach;
 
         // initialize the element index -> SATNUM index mapping
         const auto& fieldProps = eclState.fieldProps();
-        const std::vector<int>& satnumData = fieldProps.get_global<int>("SATNUM");
+        const std::vector<int>& satnumData = fieldProps.get_global_int("SATNUM");
         elemToSatnumIdx_.resize(compressedToCartesianElemIdx.size());
         for (unsigned elemIdx = 0; elemIdx < compressedToCartesianElemIdx.size(); ++ elemIdx) {
             unsigned cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
@@ -212,9 +210,7 @@ private:
     /*!
      * \brief Specify the solid energy law by setting heat capacity of rock to 0
      */
-    void initNullRockEnergy_(const Ewoms::Deck& deck EWOMS_UNUSED,
-                             const Ewoms::EclipseState& eclState EWOMS_UNUSED,
-                             const std::vector<int>& compressedToCartesianElemIdx EWOMS_UNUSED)
+    void initNullRockEnergy_()
     {
         solidEnergyApproach_ = SolidEnergyLawParams::nullApproach;
 
@@ -225,8 +221,7 @@ private:
     /*!
      * \brief Initialize the parameters for the thermal conduction law using THCONR and friends.
      */
-    void initThconr_(const Ewoms::Deck& deck EWOMS_UNUSED,
-                     const Ewoms::EclipseState& eclState,
+    void initThconr_(const Ewoms::EclipseState& eclState,
                      const std::vector<int>& compressedToCartesianElemIdx)
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thconrApproach;
@@ -235,11 +230,11 @@ private:
         auto globalSize = eclState.getInputGrid().getCartesianSize();
         std::vector<double> thconrData(globalSize, 0);
         std::vector<double> thconsfData(globalSize, 0);
-        if (fieldProps.has<double>("THCONR"))
-            thconrData  = fieldProps.get_global<double>("THCONR");
+        if (fieldProps.has_double("THCONR"))
+            thconrData  = fieldProps.get_global_double("THCONR");
 
-        if (fieldProps.has<double>("THCONSF"))
-            thconsfData = fieldProps.get_global<double>("THCONSF");
+        if (fieldProps.has_double("THCONSF"))
+            thconsfData = fieldProps.get_global_double("THCONSF");
 
         unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
@@ -260,8 +255,7 @@ private:
     /*!
      * \brief Initialize the parameters for the thermal conduction law using THCROCK and friends.
      */
-    void initThc_(const Ewoms::Deck& deck EWOMS_UNUSED,
-                  const Ewoms::EclipseState& eclState,
+    void initThc_(const Ewoms::EclipseState& eclState,
                   const std::vector<int>& compressedToCartesianElemIdx)
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thcApproach;
@@ -271,21 +265,21 @@ private:
         std::vector<double> thcrockData(globalSize,0);
         std::vector<double> thcoilData(globalSize,0);
         std::vector<double> thcgasData(globalSize,0);
-        std::vector<double> thcwaterData = fieldProps.get_global<double>("THCWATER");
+        std::vector<double> thcwaterData = fieldProps.get_global_double("THCWATER");
 
-        if (fieldProps.has<double>("THCROCK"))
-            thcrockData = fieldProps.get_global<double>("THCROCK");
+        if (fieldProps.has_double("THCROCK"))
+            thcrockData = fieldProps.get_global_double("THCROCK");
 
-        if (fieldProps.has<double>("THCOIL"))
-            thcoilData = fieldProps.get_global<double>("THCOIL");
+        if (fieldProps.has_double("THCOIL"))
+            thcoilData = fieldProps.get_global_double("THCOIL");
 
-        if (fieldProps.has<double>("THCGAS"))
-            thcgasData = fieldProps.get_global<double>("THCGAS");
+        if (fieldProps.has_double("THCGAS"))
+            thcgasData = fieldProps.get_global_double("THCGAS");
 
-        if (fieldProps.has<double>("THCWATER"))
-            thcwaterData = fieldProps.get_global<double>("THCWATER");
+        if (fieldProps.has_double("THCWATER"))
+            thcwaterData = fieldProps.get_global_double("THCWATER");
 
-        const std::vector<double>& poroData = fieldProps.get_global<double>("PORO");
+        const std::vector<double>& poroData = fieldProps.get_global_double("PORO");
 
         unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
@@ -309,9 +303,7 @@ private:
     /*!
      * \brief Disable thermal conductivity
      */
-    void initNullCond_(const Ewoms::Deck& deck EWOMS_UNUSED,
-                       const Ewoms::EclipseState& eclState EWOMS_UNUSED,
-                       const std::vector<int>& compressedToCartesianElemIdx EWOMS_UNUSED)
+    void initNullCond_()
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::nullApproach;
 

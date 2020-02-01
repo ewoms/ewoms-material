@@ -172,8 +172,8 @@ public:
         // copy the SATNUM grid property. in some cases this is not necessary, but it
         // should not require much memory anyway...
         satnumRegionArray_.resize(numCompressedElems);
-        if (eclState.fieldProps().has<int>("SATNUM")) {
-            const auto& satnumRawData = eclState.fieldProps().get_global<int>("SATNUM");
+        if (eclState.fieldProps().has_int("SATNUM")) {
+            const auto& satnumRawData = eclState.fieldProps().get_global_int("SATNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 unsigned cartesianElemIdx = static_cast<unsigned>(compressedToCartesianElemIdx[elemIdx]);
                 satnumRegionArray_[elemIdx] = satnumRawData[cartesianElemIdx] - 1;
@@ -185,8 +185,8 @@ public:
         // create the information for the imbibition region (IMBNUM). By default this is
         // the same as the saturation region (SATNUM)
         imbnumRegionArray_ = satnumRegionArray_;
-        if (eclState.fieldProps().has<int>("IMBNUM")) {
-            const auto& imbnumRawData = eclState.fieldProps().get_global<int>("IMBNUM");
+        if (eclState.fieldProps().has_int("IMBNUM")) {
+            const auto& imbnumRawData = eclState.fieldProps().get_global_int("IMBNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 int cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
                 imbnumRegionArray_[elemIdx] = imbnumRawData[cartesianElemIdx] - 1;
@@ -1097,9 +1097,9 @@ private:
     GasOilEffectiveParamVector gasOilEffectiveParamVector_;
     OilWaterEffectiveParamVector oilWaterEffectiveParamVector_;
 
-    Ewoms::EclMultiplexerApproach threePhaseApproach_;
+    Ewoms::EclMultiplexerApproach threePhaseApproach_ = EclMultiplexerApproach::EclDefaultApproach;
     // this attribute only makes sense for twophase simulations!
-    enum EclTwoPhaseApproach twoPhaseApproach_;
+    enum EclTwoPhaseApproach twoPhaseApproach_ = EclTwoPhaseApproach::EclTwoPhaseGasOil;
 
     std::vector<std::shared_ptr<MaterialLawParams> > materialLawParams_;
 

@@ -92,17 +92,17 @@ public:
         // _may_ be needed to calculate the Leverett capillary pressure scaling factor
         compressedPoro = fieldProps.get_copy<double>("PORO");
 
-        if (fieldProps.has<double>("PERMX"))
+        if (fieldProps.has_double("PERMX"))
             compressedPermx = fieldProps.get_copy<double>("PERMX");
         else
             compressedPermx.clear();
 
-        if (fieldProps.has<double>("PERMY"))
+        if (fieldProps.has_double("PERMY"))
             compressedPermy = fieldProps.get_copy<double>("PERMY");
         else
             compressedPermy = compressedPermx;
 
-        if (fieldProps.has<double>("PERMZ"))
+        if (fieldProps.has_double("PERMZ"))
             compressedPermz = fieldProps.get_copy<double>("PERMZ");
         else
             compressedPermz = compressedPermx;
