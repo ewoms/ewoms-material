@@ -81,8 +81,9 @@ auto getRv_(typename std::enable_if<HasMember_Rv<FluidState>::value, const Fluid
 { return Ewoms::decay<LhsEval>(fluidState.Rv()); }
 
 template <class FluidSystem, class FluidState, class LhsEval>
-LhsEval getSaltConcentration_(typename std::enable_if<!HasMember_saltConcentration<FluidState>::value, const FluidState&>::type fluidState,
-               unsigned regionIdx)
+LhsEval getSaltConcentration_(typename std::enable_if<!HasMember_saltConcentration<FluidState>::value,
+                              const FluidState&>::type fluidState EWOMS_UNUSED,
+                              unsigned regionIdx EWOMS_UNUSED)
 {return 0.0;}
 
 template <class FluidSystem, class FluidState, class LhsEval>
