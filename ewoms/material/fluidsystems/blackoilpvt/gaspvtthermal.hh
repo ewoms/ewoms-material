@@ -110,9 +110,9 @@ public:
         //////
         const auto& tables = eclState.getTableManager();
 
-        enableThermalDensity_ = deck.hasKeyword("GASDENT");
-        enableThermalViscosity_ = deck.hasKeyword("GASVISCT");
-        enableInternalEnergy_ = deck.hasKeyword("SPECHEAT");
+        enableThermalDensity_ = tables.GasDenT().size() > 0;
+        enableThermalViscosity_ = tables.hasTables("GASVISCT");
+        enableInternalEnergy_ = tables.hasTables("SPECHEAT");
 
         unsigned numRegions = isothermalPvt_->numRegions();
         setNumRegions(numRegions);
@@ -120,8 +120,8 @@ public:
         // viscosity
         if (enableThermalViscosity_) {
             const auto& gasvisctTables = tables.getGasvisctTables();
-            int gasCompIdx = deck.getKeyword("GCOMPIDX").getRecord(0).getItem("GAS_COMPONENT_INDEX").get< int >(0) - 1;
-            std::string gasvisctColumnName = "Viscosity"+std::to_string(static_cast<long long>(gasCompIdx));
+            auto gasCompIdx = tables.gas_comp_index();
+            std::string gasvisctColumnName = "Viscosity" + std::to_string(static_cast<long long>(gasCompIdx));
 
             for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
                 const auto& T = gasvisctTables[regionIdx].getColumn("Temperature").vectorCopy();
@@ -131,20 +131,21 @@ public:
         }
 
         // temperature dependence of gas density
-        if (enableThermalDensity_) {
-            const auto& gasdentKeyword = deck.getKeyword("GASDENT");
+        if (tables.GasDenT().size() > 0) {
+            const auto& gasDenT = tables.GasDenT();
 
-            assert(gasdentKeyword.size() == numRegions);
+            assert(gasDenT.size() == numRegions);
             for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
-                const auto& gasdentRecord = gasdentKeyword.getRecord(regionIdx);
+                const auto& record = gasDenT[regionIdx];
 
-                gasdentRefTemp_[regionIdx] = gasdentRecord.getItem("REFERENCE_TEMPERATURE").getSIDouble(0);
-                gasdentCT1_[regionIdx] = gasdentRecord.getItem("EXPANSION_COEFF_LINEAR").getSIDouble(0);
-                gasdentCT2_[regionIdx] = gasdentRecord.getItem("EXPANSION_COEFF_QUADRATIC").getSIDouble(0);
+                gasdentRefTemp_[regionIdx] = record.T0;
+                gasdentCT1_[regionIdx] = record.C1;
+                gasdentCT2_[regionIdx] = record.C2;
             }
+            enableThermalDensity_ = true;
         }
 
-        if (deck.hasKeyword("SPECHEAT")) {
+        if (enableInternalEnergy_) {
             // the specific internal energy of gas. be aware that ecl only specifies the heat capacity
             // (via the SPECHEAT keyword) and we need to integrate it ourselfs to get the
             // internal energy

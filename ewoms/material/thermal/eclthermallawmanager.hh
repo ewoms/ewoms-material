@@ -159,9 +159,10 @@ private:
             auto& elemParam = solidEnergyLawParams_[elemIdx];
             elemParam.setSolidEnergyApproach(SolidEnergyLawParams::heatcrApproach);
             auto& heatcrElemParams = elemParam.template getRealParams<SolidEnergyLawParams::heatcrApproach>();
+            unsigned cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
 
-            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[elemIdx]);
-            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[elemIdx]);
+            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[cartesianElemIdx]);
+            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[cartesianElemIdx]);
             heatcrElemParams.finalize();
             elemParam.finalize();
         }
@@ -227,9 +228,8 @@ private:
         thermalConductivityApproach_ = ThermalConductionLawParams::thconrApproach;
 
         const auto& fieldProps = eclState.fieldProps();
-        auto globalSize = eclState.getInputGrid().getCartesianSize();
-        std::vector<double> thconrData(globalSize, 0);
-        std::vector<double> thconsfData(globalSize, 0);
+        std::vector<double> thconrData;
+        std::vector<double> thconsfData;
         if (fieldProps.has_double("THCONR"))
             thconrData  = fieldProps.get_global_double("THCONR");
 
@@ -244,8 +244,10 @@ private:
             auto& thconrElemParams = elemParams.template getRealParams<ThermalConductionLawParams::thconrApproach>();
 
             int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
-            thconrElemParams.setReferenceTotalThermalConductivity(thconrData[cartElemIdx]);
-            thconrElemParams.setDTotalThermalConductivity_dSg(thconsfData[cartElemIdx]);
+            double thconr = thconrData.empty()   ? 0.0 : thconrData[cartElemIdx];
+            double thconsf = thconsfData.empty() ? 0.0 : thconsfData[cartElemIdx];
+            thconrElemParams.setReferenceTotalThermalConductivity(thconr);
+            thconrElemParams.setDTotalThermalConductivity_dSg(thconsf);
 
             thconrElemParams.finalize();
             elemParams.finalize();
@@ -261,10 +263,9 @@ private:
         thermalConductivityApproach_ = ThermalConductionLawParams::thcApproach;
 
         const auto& fieldProps = eclState.fieldProps();
-        auto globalSize = eclState.getInputGrid().getCartesianSize();
-        std::vector<double> thcrockData(globalSize,0);
-        std::vector<double> thcoilData(globalSize,0);
-        std::vector<double> thcgasData(globalSize,0);
+        std::vector<double> thcrockData;
+        std::vector<double> thcoilData;
+        std::vector<double> thcgasData;
         std::vector<double> thcwaterData = fieldProps.get_global_double("THCWATER");
 
         if (fieldProps.has_double("THCROCK"))
@@ -290,10 +291,14 @@ private:
 
             int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
             thcElemParams.setPorosity(poroData[cartElemIdx]);
-            thcElemParams.setThcrock(thcrockData[cartElemIdx]);
-            thcElemParams.setThcoil(thcoilData[cartElemIdx]);
-            thcElemParams.setThcgas(thcgasData[cartElemIdx]);
-            thcElemParams.setThcwater(thcwaterData[cartElemIdx]);
+            double thcrock = thcrockData.empty()    ? 0.0 : thcrockData[cartElemIdx];
+            double thcoil = thcoilData.empty()      ? 0.0 : thcoilData[cartElemIdx];
+            double thcgas = thcgasData.empty()      ? 0.0 : thcgasData[cartElemIdx];
+            double thcwater = thcwaterData.empty()  ? 0.0 : thcwaterData[cartElemIdx];
+            thcElemParams.setThcrock(thcrock);
+            thcElemParams.setThcoil(thcoil);
+            thcElemParams.setThcgas(thcgas);
+            thcElemParams.setThcwater(thcwater);
 
             thcElemParams.finalize();
             elemParams.finalize();

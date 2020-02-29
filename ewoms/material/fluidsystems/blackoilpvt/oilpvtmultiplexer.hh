@@ -32,6 +32,11 @@
 #include "liveoilpvt.hh"
 #include "oilpvtthermal.hh"
 
+#if HAVE_ECL_INPUT
+#include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/runspec.hh>
+#endif
+
 namespace Ewoms {
 #define EWOMS_OIL_PVT_MULTIPLEXER_CALL(codeToCall)                        \
     switch (approach_) {                                                \
@@ -134,17 +139,16 @@ public:
      */
     void initFromDeck(const Deck& deck, const EclipseState& eclState)
     {
-        bool enableOil = deck.hasKeyword("OIL");
-        if (!enableOil)
+        if (!eclState.runspec().phases().active(Phase::OIL))
             return;
 
-        if (enableThermal && (deck.hasKeyword("THERMAL") || deck.hasKeyword("TEMP")))
+        if (enableThermal && eclState.getSimulationConfig().isThermal())
             setApproach(ThermalOilPvt);
-        else if (deck.hasKeyword("PVCDO"))
+        else if (!eclState.getTableManager().getPvcdoTable().empty())
             setApproach(ConstantCompressibilityOilPvt);
-        else if (deck.hasKeyword("PVDO"))
+        else if (eclState.getTableManager().hasTables("PVDO"))
             setApproach(DeadOilPvt);
-        else if (deck.hasKeyword("PVTO"))
+        else if (!eclState.getTableManager().getPvtoTables().empty())
             setApproach(LiveOilPvt);
 
         EWOMS_OIL_PVT_MULTIPLEXER_CALL(pvtImpl.initFromDeck(deck, eclState));

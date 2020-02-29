@@ -116,32 +116,31 @@ public:
         //////
         const auto& tables = eclState.getTableManager();
 
-        enableThermalDensity_ = deck.hasKeyword("OILDENT");
-        enableThermalViscosity_ = deck.hasKeyword("OILVISCT");
-        enableInternalEnergy_ = deck.hasKeyword("SPECHEAT");
+        enableThermalDensity_ = tables.OilDenT().size() > 0;
+        enableThermalViscosity_ = tables.hasTables("OILVISCT");
+        enableInternalEnergy_ = tables.hasTables("SPECHEAT");
 
         unsigned numRegions = isothermalPvt_->numRegions();
         setNumRegions(numRegions);
 
         // viscosity
-        if (deck.hasKeyword("OILVISCT")) {
-            if (!deck.hasKeyword("VISCREF"))
+        if (enableThermalViscosity_) {
+            if (tables.getViscrefTable().empty())
                 throw std::runtime_error("VISCREF is required when OILVISCT is present");
 
             const auto& oilvisctTables = tables.getOilvisctTables();
-            const auto& viscrefKeyword = deck.getKeyword("VISCREF");
+            const auto& viscrefTable = tables.getViscrefTable();
 
             assert(oilvisctTables.size() == numRegions);
-            assert(viscrefKeyword.size() == numRegions);
+            assert(viscrefTable.size() == numRegions);
 
             for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
                 const auto& TCol = oilvisctTables[regionIdx].getColumn("Temperature").vectorCopy();
                 const auto& muCol = oilvisctTables[regionIdx].getColumn("Viscosity").vectorCopy();
                 oilvisctCurves_[regionIdx].setXYContainers(TCol, muCol);
 
-                const auto& viscrefRecord = viscrefKeyword.getRecord(regionIdx);
-                viscrefPress_[regionIdx] = viscrefRecord.getItem("REFERENCE_PRESSURE").getSIDouble(0);
-                viscrefRs_[regionIdx] = viscrefRecord.getItem("REFERENCE_RS").getSIDouble(0);
+                viscrefPress_[regionIdx] = viscrefTable[regionIdx].reference_pressure;
+                viscrefRs_[regionIdx] = viscrefTable[regionIdx].reference_rs;
 
                 // temperature used to calculate the reference viscosity [K]. the
                 // value does not really matter if the underlying PVT object really
@@ -158,20 +157,19 @@ public:
         }
 
         // temperature dependence of oil density
-        if (enableThermalDensity_) {
-            const auto& oildentKeyword = deck.getKeyword("OILDENT");
-
-            assert(oildentKeyword.size() == numRegions);
+        const auto& oilDenT = tables.OilDenT();
+        if (oilDenT.size() > 0) {
+            assert(oilDenT.size() == numRegions);
             for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
-                const auto& oildentRecord = oildentKeyword.getRecord(regionIdx);
+                const auto& record = oilDenT[regionIdx];
 
-                oildentRefTemp_[regionIdx] = oildentRecord.getItem("REFERENCE_TEMPERATURE").getSIDouble(0);
-                oildentCT1_[regionIdx] = oildentRecord.getItem("EXPANSION_COEFF_LINEAR").getSIDouble(0);
-                oildentCT2_[regionIdx] = oildentRecord.getItem("EXPANSION_COEFF_QUADRATIC").getSIDouble(0);
+                oildentRefTemp_[regionIdx] = record.T0;
+                oildentCT1_[regionIdx] = record.C1;
+                oildentCT2_[regionIdx] = record.C2;
             }
         }
 
-        if (deck.hasKeyword("SPECHEAT")) {
+        if (enableInternalEnergy_) {
             // the specific internal energy of liquid oil. be aware that ecl only specifies the
             // heat capacity (via the SPECHEAT keyword) and we need to integrate it
             // ourselfs to get the internal energy

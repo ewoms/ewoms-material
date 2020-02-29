@@ -31,6 +31,11 @@
 #include "constantcompressibilitybrinepvt.hh"
 #include "waterpvtthermal.hh"
 
+#if HAVE_ECL_INPUT
+#include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/runspec.hh>
+#endif
+
 #define EWOMS_WATER_PVT_MULTIPLEXER_CALL(codeToCall)                      \
     switch (approach_) {                                                \
     case ConstantCompressibilityWaterPvt: {                             \
@@ -114,15 +119,14 @@ public:
      */
     void initFromDeck(const Deck& deck, const EclipseState& eclState)
     {
-        bool enableWater = deck.hasKeyword("WATER");
-        if (!enableWater)
+        if (!eclState.runspec().phases().active(Phase::WATER))
             return;
 
-        if (enableThermal && (deck.hasKeyword("THERMAL") || deck.hasKeyword("TEMP")))
+        if (enableThermal && eclState.getSimulationConfig().isThermal())
             setApproach(ThermalWaterPvt);
-        else if (deck.hasKeyword("PVTW"))
+        else if (!eclState.getTableManager().getPvtwTable().empty())
             setApproach(ConstantCompressibilityWaterPvt);
-        else if (enableBrine && deck.hasKeyword("PVTWSALT"))
+        else if (enableBrine && !eclState.getTableManager().getPvtwSaltTables().empty())
             setApproach(ConstantCompressibilityBrinePvt);
 
         EWOMS_WATER_PVT_MULTIPLEXER_CALL(pvtImpl.initFromDeck(deck, eclState));

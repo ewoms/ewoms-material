@@ -34,6 +34,7 @@
 #include <ewoms/common/exceptions.hh>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace Ewoms {
@@ -165,9 +166,9 @@ protected:
     const Implementation& asImp_() const
     { return *static_cast<const Implementation*>(this); }
 
-    Scalar moleFraction_[numPhases][numComponents];
-    Scalar averageMolarMass_[numPhases];
-    Scalar sumMoleFractions_[numPhases];
+    std::array<std::array<Scalar,numComponents>,numPhases> moleFraction_;
+    std::array<Scalar,numPhases> averageMolarMass_;
+    std::array<Scalar,numPhases> sumMoleFractions_;
 };
 
 /*!
