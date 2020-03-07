@@ -631,8 +631,9 @@ inline void testAll()
 
     auto deck = parser.parseString(deckString1);
     Ewoms::EclipseState eclState(deck);
+    Ewoms::Schedule schedule(deck, eclState);
 
-    FluidSystem::initFromDeck(deck, eclState);
+    FluidSystem::initFromEclState(eclState, schedule);
 
     // create a parameter cache
     typedef typename FluidSystem::template ParameterCache<Scalar> ParamCache;

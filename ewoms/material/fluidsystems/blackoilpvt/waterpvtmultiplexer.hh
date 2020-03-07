@@ -117,7 +117,7 @@ public:
      *
      * This method assumes that the deck features valid DENSITY and PVDG keywords.
      */
-    void initFromDeck(const Deck& deck, const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule& schedule)
     {
         if (!eclState.runspec().phases().active(Phase::WATER))
             return;
@@ -129,7 +129,7 @@ public:
         else if (enableBrine && !eclState.getTableManager().getPvtwSaltTables().empty())
             setApproach(ConstantCompressibilityBrinePvt);
 
-        EWOMS_WATER_PVT_MULTIPLEXER_CALL(pvtImpl.initFromDeck(deck, eclState));
+        EWOMS_WATER_PVT_MULTIPLEXER_CALL(pvtImpl.initFromEclState(eclState, schedule));
     }
 #endif // HAVE_ECL_INPUT
 

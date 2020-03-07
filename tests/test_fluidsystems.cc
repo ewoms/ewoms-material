@@ -74,7 +74,8 @@ void ensureBlackoilApi()
 #if HAVE_ECL_INPUT
         Ewoms::Deck deck;
         Ewoms::EclipseState eclState(deck);
-        FluidSystem::initFromDeck(deck, eclState);
+        Ewoms::Schedule schedule(deck, eclState);
+        FluidSystem::initFromEclState(eclState, schedule);
 #endif
 
         typedef typename FluidSystem::Scalar Scalar;

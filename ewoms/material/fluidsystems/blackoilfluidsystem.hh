@@ -40,6 +40,12 @@
 #include <ewoms/common/hasmembergeneratormacros.hh>
 #include <ewoms/common/exceptions.hh>
 
+#if HAVE_ECL_INPUT
+#include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/tables/flattable.hh>
+#include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
+#endif
+
 #include <memory>
 #include <vector>
 #include <array>
@@ -173,39 +179,35 @@ public:
      ****************************************/
 #if HAVE_ECL_INPUT
     /*!
-     * \brief Initialize the fluid system using an ECL deck object
+     * \brief Initialize the fluid system using an ECL state object
      */
-    static void initFromDeck(const Deck& deck, const EclipseState& eclState)
+    static void initFromEclState(const EclipseState& eclState, const Schedule& schedule)
     {
-        auto densityKeyword = deck.getKeyword("DENSITY");
-        size_t numRegions = densityKeyword.size();
+        const auto& densityTable = eclState.getTableManager().getDensityTable();
+        size_t numRegions = densityTable.size();
         initBegin(numRegions);
 
         numActivePhases_ = 0;
         std::fill_n(&phaseIsActive_[0], numPhases, false);
 
-        if (deck.hasKeyword("OIL")) {
+        if (eclState.runspec().phases().active(Phase::OIL)) {
             phaseIsActive_[oilPhaseIdx] = true;
             ++ numActivePhases_;
         }
 
-        if (deck.hasKeyword("GAS")) {
+        if (eclState.runspec().phases().active(Phase::GAS)) {
             phaseIsActive_[gasPhaseIdx] = true;
             ++ numActivePhases_;
         }
 
-        if (deck.hasKeyword("WATER")) {
+        if (eclState.runspec().phases().active(Phase::WATER)) {
             phaseIsActive_[waterPhaseIdx] = true;
             ++ numActivePhases_;
         }
 
         // set the surface conditions using the STCOND keyword
-        if (deck.hasKeyword("STCOND")) {
-            auto stcondKeyword = deck.getKeyword("STCOND");
-
-            surfaceTemperature = stcondKeyword.getRecord(0).getItem("TEMPERATURE").getSIDouble(0);
-            surfacePressure = stcondKeyword.getRecord(0).getItem("PRESSURE").getSIDouble(0);
-        }
+        surfaceTemperature = eclState.getTableManager().stCond().temperature;
+        surfacePressure = eclState.getTableManager().stCond().pressure;
 
         // The reservoir temperature does not really belong into the table manager. TODO:
         // change this in ewoms-eclio
@@ -214,31 +216,30 @@ public:
         // this fluidsystem only supports two or three phases
         assert(numActivePhases_ >= 1 && numActivePhases_ <= 3);
 
-        setEnableDissolvedGas(deck.hasKeyword("DISGAS"));
-        setEnableVaporizedOil(deck.hasKeyword("VAPOIL"));
+        setEnableDissolvedGas(eclState.getSimulationConfig().hasDISGAS());
+        setEnableVaporizedOil(eclState.getSimulationConfig().hasVAPOIL());
 
         // set the reference densities of all PVT regions
         for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
-            const auto& densityRecord = densityKeyword.getRecord(regionIdx);
-            setReferenceDensities(densityRecord.getItem("OIL").getSIDouble(0),
-                                  densityRecord.getItem("WATER").getSIDouble(0),
-                                  densityRecord.getItem("GAS").getSIDouble(0),
+            setReferenceDensities(densityTable[regionIdx].oil,
+                                  densityTable[regionIdx].water,
+                                  densityTable[regionIdx].gas,
                                   regionIdx);
         }
 
         if (phaseIsActive(gasPhaseIdx)) {
             gasPvt_ = std::make_shared<GasPvt>();
-            gasPvt_->initFromDeck(deck, eclState);
+            gasPvt_->initFromEclState(eclState, schedule);
         }
 
         if (phaseIsActive(oilPhaseIdx)) {
             oilPvt_ = std::make_shared<OilPvt>();
-            oilPvt_->initFromDeck(deck, eclState);
+            oilPvt_->initFromEclState(eclState, schedule);
         }
 
         if (phaseIsActive(waterPhaseIdx)) {
             waterPvt_ = std::make_shared<WaterPvt>();
-            waterPvt_->initFromDeck(deck, eclState);
+            waterPvt_->initFromEclState(eclState, schedule);
         }
 
         initEnd();
@@ -1263,62 +1264,6 @@ public:
         assert(phaseIdx<numPhases);
         assert(phaseIsActive(phaseIdx));
         return canonicalToActivePhaseIdx_[phaseIdx];
-    }
-
-    template<class Serializer>
-    static std::size_t packSize(Serializer& serializer)
-    {
-        return serializer.packSize(numActivePhases_) +
-               serializer.packSize(phaseIsActive_) +
-               serializer.packSize(reservoirTemperature_) +
-               serializer.packSize(gasPvt_) +
-               serializer.packSize(oilPvt_) +
-               serializer.packSize(waterPvt_) +
-               serializer.packSize(enableDissolvedGas_) +
-               serializer.packSize(enableVaporizedOil_) +
-               serializer.packSize(referenceDensity_) +
-               serializer.packSize(molarMass_) +
-               serializer.packSize(activeToCanonicalPhaseIdx_) +
-               serializer.packSize(canonicalToActivePhaseIdx_) +
-               serializer.packSize(isInitialized_);
-    }
-
-    template<class Serializer>
-    static void pack(std::vector<char>& buffer, int& position,
-                     Serializer& serializer)
-    {
-        serializer.pack(numActivePhases_, buffer, position);
-        serializer.pack(phaseIsActive_, buffer, position);
-        serializer.pack(reservoirTemperature_, buffer, position);
-        serializer.pack(gasPvt_, buffer, position);
-        serializer.pack(oilPvt_, buffer, position);
-        serializer.pack(waterPvt_, buffer, position);
-        serializer.pack(enableDissolvedGas_, buffer, position);
-        serializer.pack(enableVaporizedOil_, buffer, position);
-        serializer.pack(referenceDensity_, buffer, position);
-        serializer.pack(molarMass_, buffer, position);
-        serializer.pack(activeToCanonicalPhaseIdx_, buffer, position);
-        serializer.pack(canonicalToActivePhaseIdx_, buffer, position);
-        serializer.pack(isInitialized_, buffer, position);
-    }
-
-    template<class Serializer>
-    static void unpack(std::vector<char>& buffer, int& position,
-                       Serializer& serializer)
-    {
-        serializer.unpack(numActivePhases_, buffer, position);
-        serializer.unpack(phaseIsActive_, buffer, position);
-        serializer.unpack(reservoirTemperature_, buffer, position);
-        serializer.unpack(gasPvt_, buffer, position);
-        serializer.unpack(oilPvt_, buffer, position);
-        serializer.unpack(waterPvt_, buffer, position);
-        serializer.unpack(enableDissolvedGas_, buffer, position);
-        serializer.unpack(enableVaporizedOil_, buffer, position);
-        serializer.unpack(referenceDensity_, buffer, position);
-        serializer.unpack(molarMass_, buffer, position);
-        serializer.unpack(activeToCanonicalPhaseIdx_, buffer, position);
-        serializer.unpack(canonicalToActivePhaseIdx_, buffer, position);
-        serializer.unpack(isInitialized_, buffer, position);
     }
 
 private:

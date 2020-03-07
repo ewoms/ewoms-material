@@ -226,6 +226,7 @@ inline void testAll()
 
     auto deck = parser.parseString(deckString1);
     Ewoms::EclipseState eclState(deck);
+    Ewoms::Schedule schedule(deck, eclState);
 
     const auto& pvtwKeyword = deck.getKeyword("PVTW");
     size_t numPvtRegions = pvtwKeyword.size();
@@ -238,7 +239,7 @@ inline void testAll()
     // constant compressibility water
     //////////
     Ewoms::ConstantCompressibilityWaterPvt<Scalar> constCompWaterPvt;
-    constCompWaterPvt.initFromDeck(deck, eclState);
+    constCompWaterPvt.initFromEclState(eclState, schedule);
 
     // make sure that the values at the reference points are the ones specified in the
     // deck.
@@ -271,9 +272,9 @@ inline void testAll()
     Ewoms::OilPvtMultiplexer<Scalar> oilPvt;
     Ewoms::WaterPvtMultiplexer<Scalar> waterPvt;
 
-    gasPvt.initFromDeck(deck, eclState);
-    oilPvt.initFromDeck(deck, eclState);
-    waterPvt.initFromDeck(deck, eclState);
+    gasPvt.initFromEclState(eclState, schedule);
+    oilPvt.initFromEclState(eclState, schedule);
+    waterPvt.initFromEclState(eclState, schedule);
 
     typedef Ewoms::DenseAd::Evaluation<Scalar, 1> FooEval;
     ensurePvtApi<Scalar>(oilPvt, gasPvt, waterPvt);

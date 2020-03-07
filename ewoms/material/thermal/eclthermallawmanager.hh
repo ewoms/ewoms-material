@@ -69,8 +69,7 @@ public:
         thermalConductivityApproach_ = ThermalConductionLawParams::undefinedApproach;
     }
 
-    void initParamsForElements(const Ewoms::EclipseState& eclState,
-                               const std::vector<int>& compressedToCartesianElemIdx)
+    void initParamsForElements(const Ewoms::EclipseState& eclState, size_t numElems)
     {
         const auto& fieldProps = eclState.fieldProps();
         const auto& tableManager = eclState.getTableManager();
@@ -83,16 +82,16 @@ public:
             || fieldProps.has_double("THCWATER");
 
         if (hasHeatcr)
-            initHeatcr_(eclState, compressedToCartesianElemIdx);
+            initHeatcr_(eclState, numElems);
         else if (tableManager.hasTables("SPECROCK"))
-            initSpecrock_(eclState, compressedToCartesianElemIdx);
+            initSpecrock_(eclState, numElems);
         else
             initNullRockEnergy_();
 
         if (hasThconr)
-            initThconr_(eclState, compressedToCartesianElemIdx);
+            initThconr_(eclState, numElems);
         else if (hasThc)
-            initThc_(eclState, compressedToCartesianElemIdx);
+            initThc_(eclState, numElems);
         else
             initNullCond_();
     }
@@ -143,7 +142,7 @@ private:
      * \brief Initialize the parameters for the solid energy law using using HEATCR and friends.
      */
     void initHeatcr_(const Ewoms::EclipseState& eclState,
-                     const std::vector<int>& compressedToCartesianElemIdx)
+                     size_t numElems)
     {
         solidEnergyApproach_ = SolidEnergyLawParams::heatcrApproach;
         // actually the value of the reference temperature does not matter for energy
@@ -151,18 +150,16 @@ private:
         HeatcrLawParams::setReferenceTemperature(FluidSystem::surfaceTemperature);
 
         const auto& fieldProps = eclState.fieldProps();
-        const std::vector<double>& heatcrData  = fieldProps.get_global_double("HEATCR");
-        const std::vector<double>& heatcrtData = fieldProps.get_global_double("HEATCRT");
-        unsigned numElems = compressedToCartesianElemIdx.size();
+        const std::vector<double>& heatcrData  = fieldProps.get_copy<double>("HEATCR");
+        const std::vector<double>& heatcrtData = fieldProps.get_copy<double>("HEATCRT");
         solidEnergyLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
             auto& elemParam = solidEnergyLawParams_[elemIdx];
             elemParam.setSolidEnergyApproach(SolidEnergyLawParams::heatcrApproach);
             auto& heatcrElemParams = elemParam.template getRealParams<SolidEnergyLawParams::heatcrApproach>();
-            unsigned cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
 
-            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[cartesianElemIdx]);
-            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[cartesianElemIdx]);
+            heatcrElemParams.setReferenceRockHeatCapacity(heatcrData[elemIdx]);
+            heatcrElemParams.setDRockHeatCapacity_dT(heatcrtData[elemIdx]);
             heatcrElemParams.finalize();
             elemParam.finalize();
         }
@@ -172,20 +169,18 @@ private:
      * \brief Initialize the parameters for the solid energy law using using SPECROCK and friends.
      */
     void initSpecrock_(const Ewoms::EclipseState& eclState,
-                       const std::vector<int>& compressedToCartesianElemIdx)
+                       size_t numElems)
     {
         solidEnergyApproach_ = SolidEnergyLawParams::specrockApproach;
 
         // initialize the element index -> SATNUM index mapping
         const auto& fieldProps = eclState.fieldProps();
-        const std::vector<int>& satnumData = fieldProps.get_global_int("SATNUM");
-        elemToSatnumIdx_.resize(compressedToCartesianElemIdx.size());
-        for (unsigned elemIdx = 0; elemIdx < compressedToCartesianElemIdx.size(); ++ elemIdx) {
-            unsigned cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
-
+        const std::vector<int>& satnumData = fieldProps.get_copy<int>("SATNUM");
+        elemToSatnumIdx_.resize(numElems);
+        for (unsigned elemIdx = 0; elemIdx < numElems; ++ elemIdx) {
             // satnumData contains Fortran-style indices, i.e., they start with 1 instead
             // of 0!
-            elemToSatnumIdx_[elemIdx] = satnumData[cartesianElemIdx] - 1;
+            elemToSatnumIdx_[elemIdx] = satnumData[elemIdx] - 1;
         }
         // internalize the SPECROCK table
         unsigned numSatRegions = eclState.runspec().tabdims().getNumSatTables();
@@ -223,7 +218,7 @@ private:
      * \brief Initialize the parameters for the thermal conduction law using THCONR and friends.
      */
     void initThconr_(const Ewoms::EclipseState& eclState,
-                     const std::vector<int>& compressedToCartesianElemIdx)
+                     size_t numElems)
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thconrApproach;
 
@@ -231,21 +226,19 @@ private:
         std::vector<double> thconrData;
         std::vector<double> thconsfData;
         if (fieldProps.has_double("THCONR"))
-            thconrData  = fieldProps.get_global_double("THCONR");
+            thconrData  = fieldProps.get_copy<double>("THCONR");
 
         if (fieldProps.has_double("THCONSF"))
-            thconsfData = fieldProps.get_global_double("THCONSF");
+            thconsfData = fieldProps.get_copy<double>("THCONSF");
 
-        unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
             auto& elemParams = thermalConductionLawParams_[elemIdx];
             elemParams.setThermalConductionApproach(ThermalConductionLawParams::thconrApproach);
             auto& thconrElemParams = elemParams.template getRealParams<ThermalConductionLawParams::thconrApproach>();
 
-            int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
-            double thconr = thconrData.empty()   ? 0.0 : thconrData[cartElemIdx];
-            double thconsf = thconsfData.empty() ? 0.0 : thconsfData[cartElemIdx];
+            double thconr = thconrData.empty()   ? 0.0 : thconrData[elemIdx];
+            double thconsf = thconsfData.empty() ? 0.0 : thconsfData[elemIdx];
             thconrElemParams.setReferenceTotalThermalConductivity(thconr);
             thconrElemParams.setDTotalThermalConductivity_dSg(thconsf);
 
@@ -258,7 +251,7 @@ private:
      * \brief Initialize the parameters for the thermal conduction law using THCROCK and friends.
      */
     void initThc_(const Ewoms::EclipseState& eclState,
-                  const std::vector<int>& compressedToCartesianElemIdx)
+                  size_t numElems)
     {
         thermalConductivityApproach_ = ThermalConductionLawParams::thcApproach;
 
@@ -266,35 +259,33 @@ private:
         std::vector<double> thcrockData;
         std::vector<double> thcoilData;
         std::vector<double> thcgasData;
-        std::vector<double> thcwaterData = fieldProps.get_global_double("THCWATER");
+        std::vector<double> thcwaterData = fieldProps.get_copy<double>("THCWATER");
 
         if (fieldProps.has_double("THCROCK"))
-            thcrockData = fieldProps.get_global_double("THCROCK");
+            thcrockData = fieldProps.get_copy<double>("THCROCK");
 
         if (fieldProps.has_double("THCOIL"))
-            thcoilData = fieldProps.get_global_double("THCOIL");
+            thcoilData = fieldProps.get_copy<double>("THCOIL");
 
         if (fieldProps.has_double("THCGAS"))
-            thcgasData = fieldProps.get_global_double("THCGAS");
+            thcgasData = fieldProps.get_copy<double>("THCGAS");
 
         if (fieldProps.has_double("THCWATER"))
-            thcwaterData = fieldProps.get_global_double("THCWATER");
+            thcwaterData = fieldProps.get_copy<double>("THCWATER");
 
-        const std::vector<double>& poroData = fieldProps.get_global_double("PORO");
+        const std::vector<double>& poroData = fieldProps.get_copy<double>("PORO");
 
-        unsigned numElems = compressedToCartesianElemIdx.size();
         thermalConductionLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
             auto& elemParams = thermalConductionLawParams_[elemIdx];
             elemParams.setThermalConductionApproach(ThermalConductionLawParams::thcApproach);
             auto& thcElemParams = elemParams.template getRealParams<ThermalConductionLawParams::thcApproach>();
 
-            int cartElemIdx = compressedToCartesianElemIdx[elemIdx];
-            thcElemParams.setPorosity(poroData[cartElemIdx]);
-            double thcrock = thcrockData.empty()    ? 0.0 : thcrockData[cartElemIdx];
-            double thcoil = thcoilData.empty()      ? 0.0 : thcoilData[cartElemIdx];
-            double thcgas = thcgasData.empty()      ? 0.0 : thcgasData[cartElemIdx];
-            double thcwater = thcwaterData.empty()  ? 0.0 : thcwaterData[cartElemIdx];
+            thcElemParams.setPorosity(poroData[elemIdx]);
+            double thcrock = thcrockData.empty()    ? 0.0 : thcrockData[elemIdx];
+            double thcoil = thcoilData.empty()      ? 0.0 : thcoilData[elemIdx];
+            double thcgas = thcgasData.empty()      ? 0.0 : thcgasData[elemIdx];
+            double thcwater = thcwaterData.empty()  ? 0.0 : thcwaterData[elemIdx];
             thcElemParams.setThcrock(thcrock);
             thcElemParams.setThcoil(thcoil);
             thcElemParams.setThcgas(thcgas);

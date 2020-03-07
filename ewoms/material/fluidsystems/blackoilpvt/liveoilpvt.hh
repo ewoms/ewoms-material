@@ -34,9 +34,8 @@
 #include <ewoms/common/tabulated1dfunction.hh>
 
 #if HAVE_ECL_INPUT
-#include <ewoms/eclio/parser/deck/deck.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
-#include <ewoms/eclio/parser/eclipsestate/tables/simpletable.hh>
+#include <ewoms/eclio/parser/eclipsestate/schedule/schedule.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
 #endif
 
@@ -91,7 +90,7 @@ public:
     /*!
      * \brief Initialize the oil parameters via the data specified by the PVTO ECL keyword.
      */
-    void initFromDeck(const Deck& deck, const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule& schedule)
     {
         const auto& pvtoTables = eclState.getTableManager().getPvtoTables();
         const auto& densityTable = eclState.getTableManager().getDensityTable();
@@ -196,9 +195,9 @@ public:
         }
 
         vapPar2_ = 0.0;
-        if (deck.hasKeyword("VAPPARS")) {
-            const auto& vapParsKeyword = deck.getKeyword("VAPPARS");
-            vapPar2_ = vapParsKeyword.getRecord(0).getItem("OIL_DENSITY_PROPENSITY").template get<double>(0);
+        const auto& oilVap = schedule.getOilVaporizationProperties(0);
+        if (oilVap.getType() == OilVaporizationProperties::OilVaporization::VAPPARS) {
+            vapPar2_ = oilVap.vap2();
         }
 
         initEnd();

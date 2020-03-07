@@ -33,11 +33,8 @@
 #include <ewoms/common/spline.hh>
 
 #if HAVE_ECL_INPUT
-#include <ewoms/eclio/parser/deck/deck.hh>
-#include <ewoms/eclio/parser/deck/deckitem.hh>
-#include <ewoms/eclio/parser/deck/deckkeyword.hh>
-#include <ewoms/eclio/parser/deck/deckrecord.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/schedule/schedule.hh>
 #endif
 
 namespace Ewoms {
@@ -76,7 +73,7 @@ public:
     /*!
      * \brief Initialize the oil parameters via the data specified by the PVTO ECL keyword.
      */
-    void initFromDeck(const Deck&, const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule&)
     {
         const auto& pvcdoTable = eclState.getTableManager().getPvcdoTable();
         const auto& densityTable = eclState.getTableManager().getDensityTable();

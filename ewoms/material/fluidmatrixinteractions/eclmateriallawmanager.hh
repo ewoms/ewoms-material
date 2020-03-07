@@ -147,8 +147,7 @@ public:
         }
     }
 
-    void initParamsForElements(const EclipseState& eclState,
-                               const std::vector<int>& compressedToCartesianElemIdx)
+    void initParamsForElements(const EclipseState& eclState, size_t numCompressedElems)
     {
         // get the number of saturation regions
         const size_t numSatRegions = eclState.runspec().tabdims().getNumSatTables();
@@ -168,15 +167,13 @@ public:
             readOilWaterEffectiveParameters_(oilWaterEffectiveParamVector_, eclState, satRegionIdx);
         }
 
-        unsigned numCompressedElems = static_cast<unsigned>(compressedToCartesianElemIdx.size());
         // copy the SATNUM grid property. in some cases this is not necessary, but it
         // should not require much memory anyway...
         satnumRegionArray_.resize(numCompressedElems);
         if (eclState.fieldProps().has_int("SATNUM")) {
-            const auto& satnumRawData = eclState.fieldProps().get_global_int("SATNUM");
+            const auto& satnumRawData = eclState.fieldProps().get_int("SATNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
-                unsigned cartesianElemIdx = static_cast<unsigned>(compressedToCartesianElemIdx[elemIdx]);
-                satnumRegionArray_[elemIdx] = satnumRawData[cartesianElemIdx] - 1;
+                satnumRegionArray_[elemIdx] = satnumRawData[elemIdx] - 1;
             }
         }
         else
@@ -186,10 +183,9 @@ public:
         // the same as the saturation region (SATNUM)
         imbnumRegionArray_ = satnumRegionArray_;
         if (eclState.fieldProps().has_int("IMBNUM")) {
-            const auto& imbnumRawData = eclState.fieldProps().get_global_int("IMBNUM");
+            const auto& imbnumRawData = eclState.fieldProps().get_int("IMBNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
-                int cartesianElemIdx = compressedToCartesianElemIdx[elemIdx];
-                imbnumRegionArray_[elemIdx] = imbnumRawData[cartesianElemIdx] - 1;
+                imbnumRegionArray_[elemIdx] = imbnumRawData[elemIdx] - 1;
             }
         }
 
@@ -212,7 +208,7 @@ public:
             oilWaterScaledImbPointsVector.resize(numCompressedElems);
         }
 
-        EclEpsGridProperties epsGridProperties(eclState, /*imbibition=*/false, compressedToCartesianElemIdx);
+        EclEpsGridProperties epsGridProperties(eclState, /*imbibition=*/false);
 
         for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
             readGasOilScaledPoints_(gasOilScaledInfoVector,
@@ -232,7 +228,7 @@ public:
         }
 
         if (enableHysteresis()) {
-            EclEpsGridProperties epsImbGridProperties(eclState, /*imbibition=*/true, compressedToCartesianElemIdx);
+            EclEpsGridProperties epsImbGridProperties(eclState, /*imbibition=*/true);
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 readGasOilScaledPoints_(gasOilScaledImbInfoVector,
                                         gasOilScaledImbPointsVector,

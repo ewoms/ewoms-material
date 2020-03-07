@@ -32,10 +32,7 @@
 #include "gaspvtthermal.hh"
 
 #if HAVE_ECL_INPUT
-#include <ewoms/eclio/parser/deck/deck.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
-#include <ewoms/eclio/parser/deck/deckkeyword.hh>
-#include <ewoms/eclio/parser/deck/deckrecord.hh>
 #endif
 
 namespace Ewoms {
@@ -125,7 +122,7 @@ public:
      *
      * This method assumes that the deck features valid DENSITY and PVDG keywords.
      */
-    void initFromDeck(const Deck& deck, const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule& schedule)
     {
         if (!eclState.runspec().phases().active(Phase::GAS))
             return;
@@ -137,7 +134,7 @@ public:
         else if (eclState.getTableManager().hasTables("PVDG"))
             setApproach(DryGasPvt);
 
-        EWOMS_GAS_PVT_MULTIPLEXER_CALL(pvtImpl.initFromDeck(deck, eclState));
+        EWOMS_GAS_PVT_MULTIPLEXER_CALL(pvtImpl.initFromEclState(eclState, schedule));
     }
 #endif // HAVE_ECL_INPUT
 

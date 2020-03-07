@@ -30,10 +30,6 @@
 #include <ewoms/common/tabulated1dfunction.hh>
 
 #if HAVE_ECL_INPUT
-#include <ewoms/eclio/parser/deck/deck.hh>
-#include <ewoms/eclio/parser/deck/deckkeyword.hh>
-#include <ewoms/eclio/parser/deck/deckrecord.hh>
-#include <ewoms/eclio/parser/deck/deckitem.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
 #endif
 
@@ -70,7 +66,7 @@ public:
      * \brief Sets the pressure-dependent water viscosity and density
      *        using a table stemming from the Eclipse PVTW keyword.
      */
-    void initFromDeck(const Deck&, const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule&)
     {
         const auto& pvtwTable = eclState.getTableManager().getPvtwTable();
         const auto& densityTable = eclState.getTableManager().getDensityTable();

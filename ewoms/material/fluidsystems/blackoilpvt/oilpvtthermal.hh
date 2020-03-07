@@ -35,7 +35,6 @@
 #include <ewoms/common/spline.hh>
 
 #if HAVE_ECL_INPUT
-#include <ewoms/eclio/parser/deck/deck.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/simpletable.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
@@ -102,14 +101,13 @@ public:
     /*!
      * \brief Implement the temperature part of the oil PVT properties.
      */
-    void initFromDeck(const Deck& deck,
-                      const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule& schedule)
     {
         //////
         // initialize the isothermal part
         //////
         isothermalPvt_ = new IsothermalPvt;
-        isothermalPvt_->initFromDeck(deck, eclState);
+        isothermalPvt_->initFromEclState(eclState, schedule);
 
         //////
         // initialize the thermal part

@@ -63,8 +63,7 @@ public:
     // interactions. note that for this, the EclipseState's fieldProps must exhibit the
     // correct set of active set (confer FieldPropsManager::reset_actnum())
     EclEpsGridProperties(const Ewoms::EclipseState& eclState,
-                         bool useImbibition,
-                         const std::vector<int>& compressedToCartesianElemIdx)
+                         bool useImbibition)
     {
         std::string kwPrefix = useImbibition?"I":"";
 

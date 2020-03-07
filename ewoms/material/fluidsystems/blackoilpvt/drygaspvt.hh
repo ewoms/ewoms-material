@@ -32,12 +32,10 @@
 #include <ewoms/common/tabulated1dfunction.hh>
 
 #if HAVE_ECL_INPUT
-#include <ewoms/eclio/parser/deck/deck.hh>
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/schedule/schedule.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/pvdgtable.hh>
-#include <ewoms/eclio/parser/deck/deckkeyword.hh>
-#include <ewoms/eclio/parser/deck/deckrecord.hh>
 #endif
 
 #include <vector>
@@ -72,7 +70,7 @@ public:
      *
      * This method assumes that the deck features valid DENSITY and PVDG keywords.
      */
-    void initFromDeck(const Deck&, const EclipseState& eclState)
+    void initFromEclState(const EclipseState& eclState, const Schedule&)
     {
         const auto& pvdgTables = eclState.getTableManager().getPvdgTables();
         const auto& densityTable = eclState.getTableManager().getDensityTable();
