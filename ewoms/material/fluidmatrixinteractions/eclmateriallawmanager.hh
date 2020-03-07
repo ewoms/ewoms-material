@@ -171,7 +171,7 @@ public:
         // should not require much memory anyway...
         satnumRegionArray_.resize(numCompressedElems);
         if (eclState.fieldProps().has_int("SATNUM")) {
-            const auto& satnumRawData = eclState.fieldProps().get_int("SATNUM");
+            const auto& satnumRawData = eclState.fieldProps().get_copy<int>("SATNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 satnumRegionArray_[elemIdx] = satnumRawData[elemIdx] - 1;
             }
@@ -183,7 +183,7 @@ public:
         // the same as the saturation region (SATNUM)
         imbnumRegionArray_ = satnumRegionArray_;
         if (eclState.fieldProps().has_int("IMBNUM")) {
-            const auto& imbnumRawData = eclState.fieldProps().get_int("IMBNUM");
+            const auto& imbnumRawData = eclState.fieldProps().get_copy<int>("IMBNUM");
             for (unsigned elemIdx = 0; elemIdx < numCompressedElems; ++elemIdx) {
                 imbnumRegionArray_[elemIdx] = imbnumRawData[elemIdx] - 1;
             }
