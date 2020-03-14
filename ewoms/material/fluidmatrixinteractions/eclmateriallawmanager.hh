@@ -50,7 +50,6 @@
 
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
-#include <ewoms/eclio/parser/deck/deck.hh>
 
 #include <algorithm>
 
@@ -115,8 +114,7 @@ public:
     EclMaterialLawManager()
     {}
 
-    void initFromDeck(const Ewoms::Deck& deck,
-                      const Ewoms::EclipseState& eclState)
+    void initFromEclState(const Ewoms::EclipseState& eclState)
     {
         // get the number of saturation regions and the number of cells in the deck
         const size_t numSatRegions = eclState.runspec().tabdims().getNumSatTables();
@@ -126,24 +124,25 @@ public:
         hasOil = ph.active(Phase::OIL);
         hasWater = ph.active(Phase::WATER);
 
-        readGlobalEpsOptions_(deck, eclState);
-        readGlobalHysteresisOptions_(deck);
-        readGlobalThreePhaseOptions_(deck);
+        readGlobalEpsOptions_(eclState);
+        readGlobalHysteresisOptions_(eclState);
+        readGlobalThreePhaseOptions_(eclState.runspec());
 
         // read the end point scaling configuration. this needs to be done only once per
         // deck.
         gasOilConfig = std::make_shared<Ewoms::EclEpsConfig>();
         oilWaterConfig = std::make_shared<Ewoms::EclEpsConfig>();
-        gasOilConfig->initFromDeck(deck, eclState, Ewoms::EclGasOilSystem);
-        oilWaterConfig->initFromDeck(deck, eclState, Ewoms::EclOilWaterSystem);
+        gasOilConfig->initFromEclState(eclState, Ewoms::EclGasOilSystem);
+        oilWaterConfig->initFromEclState(eclState, Ewoms::EclOilWaterSystem);
 
         unscaledEpsInfo_.resize(numSatRegions);
-        if (deck.hasKeyword("STONE1EX"))
+        const auto& stone1exTable = eclState.getTableManager().getStone1exTable();
+        if (!stone1exTable.empty())
             stoneEtas.resize(numSatRegions);
         for (unsigned satRegionIdx = 0; satRegionIdx < numSatRegions; ++satRegionIdx) {
-            unscaledEpsInfo_[satRegionIdx].extractUnscaled(deck, eclState, satRegionIdx);
+            unscaledEpsInfo_[satRegionIdx].extractUnscaled(eclState, satRegionIdx);
             if (!stoneEtas.empty())
-                stoneEtas[satRegionIdx] = deck.getKeyword("STONE1EX").getRecord(satRegionIdx).getItem(0).getSIDouble(0);
+                stoneEtas[satRegionIdx] = stone1exTable[satRegionIdx].eta;
         }
     }
 
@@ -352,7 +351,7 @@ public:
      * \brief Modify the initial condition according to the SWATINIT keyword.
      *
      * The method returns the water saturation which yields a givenn capillary
-     * pressure. The reason this method is not folded directly into initFromDeck() is
+     * pressure. The reason this method is not folded directly into initFromEclState() is
      * that the capillary pressure given depends on the particuars of how the simulator
      * calculates its initial condition.
      */
@@ -611,84 +610,26 @@ public:
     std::shared_ptr<EclEpsScalingPointsInfo<Scalar> >& oilWaterScaledEpsInfoDrainagePointerReferenceHack(unsigned elemIdx)
     { return oilWaterScaledEpsInfoDrainage_[elemIdx]; }
 
-    template<class Serializer>
-    std::size_t packSize(Serializer& serializer) const
-    {
-        return serializer.packSize(enableEndPointScaling_) +
-               hysteresisConfig_->packSize(serializer) +
-               oilWaterEclEpsConfig_->packSize(serializer) +
-               serializer.packSize(unscaledEpsInfo_) +
-               serializer.packSize(threePhaseApproach_) +
-               serializer.packSize(twoPhaseApproach_) +
-               gasOilConfig->packSize(serializer) +
-               oilWaterConfig->packSize(serializer) +
-               serializer.packSize(stoneEtas) +
-               serializer.packSize(hasGas) +
-               serializer.packSize(hasOil) +
-               serializer.packSize(hasWater);
-    }
-
-    template<class Serializer>
-    void pack(std::vector<char>& buffer, int& position,
-               Serializer& serializer) const
-    {
-        serializer.pack(enableEndPointScaling_, buffer, position);
-        hysteresisConfig_->pack(buffer, position, serializer);
-        oilWaterEclEpsConfig_->pack(buffer, position, serializer);
-        serializer.pack(unscaledEpsInfo_, buffer, position);
-        serializer.pack(threePhaseApproach_, buffer, position);
-        serializer.pack(twoPhaseApproach_, buffer, position);
-        gasOilConfig->pack(buffer, position, serializer);
-        oilWaterConfig->pack(buffer, position, serializer);
-        serializer.pack(stoneEtas, buffer, position);
-        serializer.pack(hasGas, buffer, position);
-        serializer.pack(hasOil, buffer, position);
-        serializer.pack(hasWater, buffer, position);
-    }
-
-    template<class Serializer>
-    void unpack(std::vector<char>& buffer, int& position,
-                Serializer& serializer)
-    {
-        oilWaterEclEpsConfig_ = std::make_shared<Ewoms::EclEpsConfig>();
-        hysteresisConfig_ = std::make_shared<Ewoms::EclHysteresisConfig>();
-        gasOilConfig = std::make_shared<Ewoms::EclEpsConfig>();
-        oilWaterConfig = std::make_shared<Ewoms::EclEpsConfig>();
-
-        serializer.unpack(enableEndPointScaling_, buffer, position);
-        hysteresisConfig_->unpack(buffer, position, serializer);
-        oilWaterEclEpsConfig_->unpack(buffer, position, serializer);
-        serializer.unpack(unscaledEpsInfo_, buffer, position);
-        serializer.unpack(threePhaseApproach_, buffer, position);
-        serializer.unpack(twoPhaseApproach_, buffer, position);
-        gasOilConfig->unpack(buffer, position, serializer);
-        oilWaterConfig->unpack(buffer, position, serializer);
-        serializer.unpack(stoneEtas, buffer, position);
-        serializer.unpack(hasGas, buffer, position);
-        serializer.unpack(hasOil, buffer, position);
-        serializer.unpack(hasWater, buffer, position);
-    }
-
 private:
-    void readGlobalEpsOptions_(const Ewoms::Deck& deck, const Ewoms::EclipseState& eclState)
+    void readGlobalEpsOptions_(const Ewoms::EclipseState& eclState)
     {
         oilWaterEclEpsConfig_ = std::make_shared<Ewoms::EclEpsConfig>();
-        oilWaterEclEpsConfig_-> initFromDeck(deck, eclState, Ewoms::EclOilWaterSystem);
+        oilWaterEclEpsConfig_->initFromEclState(eclState, Ewoms::EclOilWaterSystem);
 
-        enableEndPointScaling_ = deck.hasKeyword("ENDSCALE");
+        enableEndPointScaling_ = eclState.getTableManager().hasTables("ENKRVD");
     }
 
-    void readGlobalHysteresisOptions_(const Ewoms::Deck& deck)
+    void readGlobalHysteresisOptions_(const Ewoms::EclipseState& state)
     {
         hysteresisConfig_ = std::make_shared<Ewoms::EclHysteresisConfig>();
-        hysteresisConfig_->initFromDeck(deck);
+        hysteresisConfig_->initFromEclState(state.runspec());
     }
 
-    void readGlobalThreePhaseOptions_(const Ewoms::Deck& deck)
+    void readGlobalThreePhaseOptions_(const Ewoms::Runspec& runspec)
     {
-        bool gasEnabled = deck.hasKeyword("GAS");
-        bool oilEnabled = deck.hasKeyword("OIL");
-        bool waterEnabled = deck.hasKeyword("WATER");
+        bool gasEnabled = runspec.phases().active(Phase::GAS);
+        bool oilEnabled = runspec.phases().active(Phase::OIL);
+        bool waterEnabled = runspec.phases().active(Phase::WATER);
 
         int numEnabled =
             (gasEnabled?1:0)
@@ -712,9 +653,10 @@ private:
             assert(numEnabled == 3);
 
             threePhaseApproach_ = EclMultiplexerApproach::EclDefaultApproach;
-            if (deck.hasKeyword("STONE") || deck.hasKeyword("STONE2"))
+            const auto& satctrls = runspec.saturationFunctionControls();
+            if (satctrls.krModel() == SatFuncControls::ThreePhaseOilKrModel::Stone2)
                 threePhaseApproach_ = EclMultiplexerApproach::EclStone2Approach;
-            else if (deck.hasKeyword("STONE1"))
+            else if (satctrls.krModel() == SatFuncControls::ThreePhaseOilKrModel::Stone1)
                 threePhaseApproach_ = EclMultiplexerApproach::EclStone1Approach;
         }
     }

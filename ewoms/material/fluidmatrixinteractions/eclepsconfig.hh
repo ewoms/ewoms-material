@@ -160,9 +160,8 @@ public:
      *
      * This requires that the ewoms-eclio module is available.
      */
-    void initFromDeck(const Ewoms::Deck& deck EWOMS_UNUSED,
-                      const Ewoms::EclipseState& eclState,
-                      Ewoms::EclTwoPhaseSystemType twoPhaseSystemType)
+    void initFromEclState(const Ewoms::EclipseState& eclState,
+                       Ewoms::EclTwoPhaseSystemType twoPhaseSystemType)
     {
         const auto& endscale = eclState.runspec().endpointScaling();
         // find out if endpoint scaling is used in the first place
@@ -218,41 +217,6 @@ public:
                                      "mutually exclusive: The deck contains the PCW/PCG property and the "
                                      "JFUNC keyword applies to the water phase.");
 
-    }
-
-    template<class Serializer>
-    std::size_t packSize(Serializer& serializer) const
-    {
-        return serializer.packSize(enableSatScaling_) +
-               serializer.packSize(enableThreePointKrSatScaling_) +
-               serializer.packSize(enablePcScaling_) +
-               serializer.packSize(enableLeverettScaling_) +
-               serializer.packSize(enableKrwScaling_) +
-               serializer.packSize(enableKrnScaling_);
-    }
-
-    template<class Serializer>
-    void pack(std::vector<char>& buffer, int& position,
-              Serializer& serializer) const
-    {
-        serializer.pack(enableSatScaling_, buffer, position);
-        serializer.pack(enableThreePointKrSatScaling_, buffer, position);
-        serializer.pack(enablePcScaling_, buffer, position);
-        serializer.pack(enableLeverettScaling_, buffer, position);
-        serializer.pack(enableKrwScaling_, buffer, position);
-        serializer.pack(enableKrnScaling_, buffer, position);
-    }
-
-    template<class Serializer>
-    void unpack(std::vector<char>& buffer, int& position,
-              Serializer& serializer)
-    {
-        serializer.unpack(enableSatScaling_, buffer, position);
-        serializer.unpack(enableThreePointKrSatScaling_, buffer, position);
-        serializer.unpack(enablePcScaling_, buffer, position);
-        serializer.unpack(enableLeverettScaling_, buffer, position);
-        serializer.unpack(enableKrwScaling_, buffer, position);
-        serializer.unpack(enableKrnScaling_, buffer, position);
     }
 
 private:
