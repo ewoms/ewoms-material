@@ -113,7 +113,7 @@ public:
      *
      * This requires that the ewoms-eclio module is available.
      */
-    void initFromEclState(const Ewoms::Runspec& runspec)
+    void initFromRunspec(const Ewoms::Runspec& runspec)
     {
         enableHysteresis_ = false;
 

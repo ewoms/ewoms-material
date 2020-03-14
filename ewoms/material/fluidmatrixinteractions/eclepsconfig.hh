@@ -161,7 +161,7 @@ public:
      * This requires that the ewoms-eclio module is available.
      */
     void initFromEclState(const Ewoms::EclipseState& eclState,
-                       Ewoms::EclTwoPhaseSystemType twoPhaseSystemType)
+                          Ewoms::EclTwoPhaseSystemType twoPhaseSystemType)
     {
         const auto& endscale = eclState.runspec().endpointScaling();
         // find out if endpoint scaling is used in the first place

@@ -622,7 +622,7 @@ private:
     void readGlobalHysteresisOptions_(const Ewoms::EclipseState& state)
     {
         hysteresisConfig_ = std::make_shared<Ewoms::EclHysteresisConfig>();
-        hysteresisConfig_->initFromEclState(state.runspec());
+        hysteresisConfig_->initFromRunspec(state.runspec());
     }
 
     void readGlobalThreePhaseOptions_(const Ewoms::Runspec& runspec)
