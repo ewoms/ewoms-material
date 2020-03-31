@@ -461,7 +461,7 @@ private:
             return unscaledPcnw*alpha;
         }
         else if (params.config().enablePcScaling()) {
-            Scalar alpha = params.scaledPoints().maxPcnw()/std::max(1e-10, params.unscaledPoints().maxPcnw());
+            Scalar alpha = params.scaledPoints().maxPcnw()/std::max<Scalar>(1e-10, params.unscaledPoints().maxPcnw());
             return unscaledPcnw*alpha;
         }
 
@@ -476,8 +476,8 @@ private:
             return scaledPcnw/alpha;
         }
         else if (params.config().enablePcScaling()) {
-            Scalar alpha = params.unscaledPoints().maxPcnw()/std::max(1e-10, params.scaledPoints().maxPcnw());
-            return scaledPcnw/std::max(1e-10, alpha);
+            Scalar alpha = params.unscaledPoints().maxPcnw()/std::max<Scalar>(1e-10, params.scaledPoints().maxPcnw());
+            return scaledPcnw/std::max<Scalar>(1e-10, alpha);
         }
 
         return scaledPcnw;
