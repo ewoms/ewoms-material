@@ -150,8 +150,8 @@ private:
         HeatcrLawParams::setReferenceTemperature(FluidSystem::surfaceTemperature);
 
         const auto& fieldProps = eclState.fieldProps();
-        const std::vector<double>& heatcrData  = fieldProps.get_copy<double>("HEATCR");
-        const std::vector<double>& heatcrtData = fieldProps.get_copy<double>("HEATCRT");
+        const std::vector<double>& heatcrData  = fieldProps.get_double("HEATCR");
+        const std::vector<double>& heatcrtData = fieldProps.get_double("HEATCRT");
         solidEnergyLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
             auto& elemParam = solidEnergyLawParams_[elemIdx];
@@ -175,7 +175,7 @@ private:
 
         // initialize the element index -> SATNUM index mapping
         const auto& fieldProps = eclState.fieldProps();
-        const std::vector<int>& satnumData = fieldProps.get_copy<int>("SATNUM");
+        const std::vector<int>& satnumData = fieldProps.get_int("SATNUM");
         elemToSatnumIdx_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++ elemIdx) {
             // satnumData contains Fortran-style indices, i.e., they start with 1 instead
@@ -226,10 +226,10 @@ private:
         std::vector<double> thconrData;
         std::vector<double> thconsfData;
         if (fieldProps.has_double("THCONR"))
-            thconrData  = fieldProps.get_copy<double>("THCONR");
+            thconrData  = fieldProps.get_double("THCONR");
 
         if (fieldProps.has_double("THCONSF"))
-            thconsfData = fieldProps.get_copy<double>("THCONSF");
+            thconsfData = fieldProps.get_double("THCONSF");
 
         thermalConductionLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {
@@ -259,21 +259,21 @@ private:
         std::vector<double> thcrockData;
         std::vector<double> thcoilData;
         std::vector<double> thcgasData;
-        std::vector<double> thcwaterData = fieldProps.get_copy<double>("THCWATER");
+        std::vector<double> thcwaterData = fieldProps.get_double("THCWATER");
 
         if (fieldProps.has_double("THCROCK"))
-            thcrockData = fieldProps.get_copy<double>("THCROCK");
+            thcrockData = fieldProps.get_double("THCROCK");
 
         if (fieldProps.has_double("THCOIL"))
-            thcoilData = fieldProps.get_copy<double>("THCOIL");
+            thcoilData = fieldProps.get_double("THCOIL");
 
         if (fieldProps.has_double("THCGAS"))
-            thcgasData = fieldProps.get_copy<double>("THCGAS");
+            thcgasData = fieldProps.get_double("THCGAS");
 
         if (fieldProps.has_double("THCWATER"))
-            thcwaterData = fieldProps.get_copy<double>("THCWATER");
+            thcwaterData = fieldProps.get_double("THCWATER");
 
-        const std::vector<double>& poroData = fieldProps.get_copy<double>("PORO");
+        const std::vector<double>& poroData = fieldProps.get_double("PORO");
 
         thermalConductionLawParams_.resize(numElems);
         for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx) {

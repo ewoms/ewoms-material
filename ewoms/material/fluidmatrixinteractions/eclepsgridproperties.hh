@@ -70,39 +70,39 @@ public:
         const auto& fieldProps = eclState.fieldProps();
 
         if (useImbibition)
-            compressedSatnum = fieldProps.get_copy<int>("IMBNUM");
+            compressedSatnum = fieldProps.get_int("IMBNUM");
         else
-            compressedSatnum = fieldProps.get_copy<int>("SATNUM");
+            compressedSatnum = fieldProps.get_int("SATNUM");
 
-        compressedSwl = fieldProps.get_copy<double>(kwPrefix+"SWL");
-        compressedSgl = fieldProps.get_copy<double>(kwPrefix+"SGL");
-        compressedSwcr = fieldProps.get_copy<double>(kwPrefix+"SWCR");
-        compressedSgcr = fieldProps.get_copy<double>(kwPrefix+"SGCR");
-        compressedSowcr = fieldProps.get_copy<double>(kwPrefix+"SOWCR");
-        compressedSogcr = fieldProps.get_copy<double>(kwPrefix+"SOGCR");
-        compressedSwu = fieldProps.get_copy<double>(kwPrefix+"SWU");
-        compressedSgu = fieldProps.get_copy<double>(kwPrefix+"SGU");
-        compressedPcw = fieldProps.get_copy<double>(kwPrefix+"PCW");
-        compressedPcg = fieldProps.get_copy<double>(kwPrefix+"PCG");
-        compressedKrw = fieldProps.get_copy<double>(kwPrefix+"KRW");
-        compressedKro = fieldProps.get_copy<double>(kwPrefix+"KRO");
-        compressedKrg = fieldProps.get_copy<double>(kwPrefix+"KRG");
+        compressedSwl = fieldProps.get_double(kwPrefix+"SWL");
+        compressedSgl = fieldProps.get_double(kwPrefix+"SGL");
+        compressedSwcr = fieldProps.get_double(kwPrefix+"SWCR");
+        compressedSgcr = fieldProps.get_double(kwPrefix+"SGCR");
+        compressedSowcr = fieldProps.get_double(kwPrefix+"SOWCR");
+        compressedSogcr = fieldProps.get_double(kwPrefix+"SOGCR");
+        compressedSwu = fieldProps.get_double(kwPrefix+"SWU");
+        compressedSgu = fieldProps.get_double(kwPrefix+"SGU");
+        compressedPcw = fieldProps.get_double(kwPrefix+"PCW");
+        compressedPcg = fieldProps.get_double(kwPrefix+"PCG");
+        compressedKrw = fieldProps.get_double(kwPrefix+"KRW");
+        compressedKro = fieldProps.get_double(kwPrefix+"KRO");
+        compressedKrg = fieldProps.get_double(kwPrefix+"KRG");
 
         // _may_ be needed to calculate the Leverett capillary pressure scaling factor
-        compressedPoro = fieldProps.get_copy<double>("PORO");
+        compressedPoro = fieldProps.get_double("PORO");
 
         if (fieldProps.has_double("PERMX"))
-            compressedPermx = fieldProps.get_copy<double>("PERMX");
+            compressedPermx = fieldProps.get_double("PERMX");
         else
             compressedPermx.clear();
 
         if (fieldProps.has_double("PERMY"))
-            compressedPermy = fieldProps.get_copy<double>("PERMY");
+            compressedPermy = fieldProps.get_double("PERMY");
         else
             compressedPermy = compressedPermx;
 
         if (fieldProps.has_double("PERMZ"))
-            compressedPermz = fieldProps.get_copy<double>("PERMZ");
+            compressedPermz = fieldProps.get_double("PERMZ");
         else
             compressedPermz = compressedPermx;
     }
