@@ -32,6 +32,8 @@
 #include <ewoms/eclio/parser/deck/deckkeyword.hh>
 #include <ewoms/eclio/parser/deck/deckrecord.hh>
 #include <ewoms/eclio/parser/deck/deckitem.hh>
+#include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/schedule/schedule.hh>
 #endif
 
 #include <ewoms/common/exceptions.hh>

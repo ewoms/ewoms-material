@@ -31,6 +31,7 @@
 
 #if HAVE_ECL_INPUT
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
+#include <ewoms/eclio/parser/eclipsestate/schedule/schedule.hh>
 #endif
 
 #include <vector>
