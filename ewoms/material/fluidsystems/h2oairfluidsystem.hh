@@ -61,7 +61,6 @@ class H2OAirFluidSystem
 {
     typedef H2OAirFluidSystem<Scalar,H2Otype> ThisType;
     typedef BaseFluidSystem <Scalar, ThisType> Base;
-    typedef Ewoms::IdealGas<Scalar> IdealGas;
 
 public:
     template <class Evaluation>

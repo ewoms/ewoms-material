@@ -45,7 +45,6 @@ namespace Ewoms {
 template <class Scalar>
 class DeadOilPvt
 {
-    typedef std::vector<std::pair<Scalar, Scalar> > SamplingPoints;
 
 public:
     typedef Ewoms::Tabulated1DFunction<Scalar> TabulatedOneDFunction;

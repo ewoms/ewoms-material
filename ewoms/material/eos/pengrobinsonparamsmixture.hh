@@ -63,7 +63,6 @@ class PengRobinsonParamsMixture
     // Peng-Robinson parameters for pure substances
     typedef Ewoms::PengRobinsonParams<Scalar> PureParams;
 
-    typedef MathToolbox<Scalar> Toolbox;
 
     // the ideal gas constant
     static const Scalar R;

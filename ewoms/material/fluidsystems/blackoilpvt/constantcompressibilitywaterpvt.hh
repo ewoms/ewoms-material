@@ -43,8 +43,6 @@ namespace Ewoms {
 template <class Scalar>
 class ConstantCompressibilityWaterPvt
 {
-    typedef Ewoms::Tabulated1DFunction<Scalar> TabulatedOneDFunction;
-    typedef std::vector<std::pair<Scalar, Scalar> > SamplingPoints;
 
 public:
     ConstantCompressibilityWaterPvt() = default;

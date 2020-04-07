@@ -50,8 +50,6 @@ enum class EclTwoPhaseApproach {
 template<class Traits, class GasOilParamsT, class OilWaterParamsT>
 class EclTwoPhaseMaterialParams : public EnsureFinalized
 {
-    typedef typename Traits::Scalar Scalar;
-    enum { numPhases = 3 };
 public:
     using EnsureFinalized :: finalize;
 

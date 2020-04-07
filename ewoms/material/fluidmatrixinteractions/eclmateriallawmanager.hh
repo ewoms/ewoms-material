@@ -108,7 +108,6 @@ private:
     typedef std::vector<std::shared_ptr<EclEpsScalingPointsInfo<Scalar> > > OilWaterScalingInfoVector;
     typedef std::vector<std::shared_ptr<GasOilTwoPhaseHystParams> > GasOilParamVector;
     typedef std::vector<std::shared_ptr<OilWaterTwoPhaseHystParams> > OilWaterParamVector;
-    typedef std::vector<std::shared_ptr<MaterialLawParams> > MaterialLawParamsVector;
 
 public:
     EclMaterialLawManager()

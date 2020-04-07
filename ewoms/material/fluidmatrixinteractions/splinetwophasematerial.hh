@@ -45,7 +45,6 @@ namespace Ewoms {
 template <class TraitsT, class ParamsT = SplineTwoPhaseMaterialParams<TraitsT> >
 class SplineTwoPhaseMaterial : public TraitsT
 {
-    typedef typename ParamsT::SamplePoints SamplePoints;
 
 public:
     //! The traits class for this material law

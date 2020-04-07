@@ -58,8 +58,6 @@ enum class EclMultiplexerApproach {
 template<class Traits, class GasOilMaterialLawT, class OilWaterMaterialLawT>
 class EclMultiplexerMaterialParams : public Traits, public EnsureFinalized
 {
-    typedef typename Traits::Scalar Scalar;
-    enum { numPhases = 3 };
 
     typedef Ewoms::EclStone1Material<Traits, GasOilMaterialLawT, OilWaterMaterialLawT> Stone1Material;
     typedef Ewoms::EclStone2Material<Traits, GasOilMaterialLawT, OilWaterMaterialLawT> Stone2Material;

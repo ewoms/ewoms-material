@@ -47,7 +47,6 @@ template<class Traits, class GasOilParamsT, class OilWaterParamsT>
 class EclStone2MaterialParams : public EnsureFinalized
 {
     typedef typename Traits::Scalar Scalar;
-    enum { numPhases = 3 };
 public:
     using EnsureFinalized :: finalize;
 

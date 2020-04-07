@@ -58,7 +58,6 @@ class H2ON2FluidSystem
     typedef BaseFluidSystem<Scalar, ThisType> Base;
 
     // convenience typedefs
-    typedef Ewoms::IdealGas<Scalar> IdealGas;
     typedef Ewoms::H2O<Scalar> IapwsH2O;
     typedef Ewoms::TabulatedComponent<Scalar, IapwsH2O > TabulatedH2O;
     typedef Ewoms::N2<Scalar> SimpleN2;

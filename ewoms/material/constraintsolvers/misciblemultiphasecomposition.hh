@@ -124,7 +124,6 @@ class MiscibleMultiPhaseComposition
     static const int numPhases = FluidSystem::numPhases;
     static const int numComponents = FluidSystem::numComponents;
 
-    typedef MathToolbox<Evaluation> Toolbox;
 
     static_assert(numPhases <= numComponents,
                   "This solver requires that the number fluid phases is smaller or equal "
