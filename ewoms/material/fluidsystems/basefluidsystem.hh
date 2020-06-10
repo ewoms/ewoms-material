@@ -274,6 +274,20 @@ public:
     {
         throw std::runtime_error("Not implemented: The fluid system '"+Dune::className<Implementation>()+"'  does not provide a heatCapacity() method!");
     }
+
+    /*!
+     * \brief Returns whether a fluid phase is considered in the conservation equations
+     *        and for output.
+     *
+     * This method essentially is a kludge which allows to avoid code duplication: Some
+     * fluid systems can be used with a reduced number of fluid phases at runtime, yet
+     * the parameters for individual fluids are handled exactly like in the general case:
+     * For example, the black-oil fluid system can be used to simulate e.g. oil-water and
+     * gas-oil problems but handling of the fluid parameters works identical to the
+     * threephase case.
+     */
+    static unsigned phaseIsActive(unsigned /*phaseIdx*/)
+    { return true; }
 };
 
 } // namespace Ewoms
