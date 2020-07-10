@@ -53,6 +53,7 @@
 #include <ewoms/material/fluidstates/nonequilibriumfluidstate.hh>
 #include <ewoms/material/fluidstates/immisciblefluidstate.hh>
 #include <ewoms/material/fluidstates/simplemodularfluidstate.hh>
+#include <ewoms/material/fluidstates/blackoilfluidstate.hh>
 
 // include the tables for CO2 which are delivered with ewoms-material by default
 #include <ewoms/common/uniformtabulated2dfunction.hh>
@@ -79,7 +80,7 @@ void ensureBlackoilApi()
 #endif
 
         typedef typename FluidSystem::Scalar Scalar;
-        typedef Ewoms::CompositionalFluidState<Evaluation, FluidSystem> FluidState;
+        typedef Ewoms::BlackOilFluidState<Evaluation, FluidSystem> FluidState;
         FluidState fluidState;
         Evaluation XoG = 0.0;
         Evaluation XgO = 0.0;

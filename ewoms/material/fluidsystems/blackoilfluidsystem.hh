@@ -600,6 +600,7 @@ public:
 
         const LhsEval& p = Ewoms::decay<LhsEval>(fluidState.pressure(phaseIdx));
         const LhsEval& T = Ewoms::decay<LhsEval>(fluidState.temperature(phaseIdx));
+        const LhsEval& saltConcentration = Ewoms::BlackOil::template getSaltConcentration_<ThisType, FluidState, LhsEval>(fluidState, regionIdx);
 
         switch (phaseIdx) {
         case oilPhaseIdx: {
@@ -640,7 +641,7 @@ public:
         case waterPhaseIdx:
             return
                 referenceDensity(waterPhaseIdx, regionIdx)
-                * waterPvt_->inverseFormationVolumeFactor(regionIdx, T, p);
+                * waterPvt_->inverseFormationVolumeFactor(regionIdx, T, p, saltConcentration);
         }
 
         throw std::logic_error("Unhandled phase index "+std::to_string(phaseIdx));
@@ -728,6 +729,7 @@ public:
 
         const auto& p = Ewoms::decay<LhsEval>(fluidState.pressure(phaseIdx));
         const auto& T = Ewoms::decay<LhsEval>(fluidState.temperature(phaseIdx));
+        const auto& saltConcentration = Ewoms::decay<LhsEval>(fluidState.saltConcentration());
 
         switch (phaseIdx) {
         case oilPhaseIdx: {
@@ -761,7 +763,7 @@ public:
             return gasPvt_->inverseFormationVolumeFactor(regionIdx, T, p, Rv);
         }
         case waterPhaseIdx:
-            return waterPvt_->inverseFormationVolumeFactor(regionIdx, T, p);
+            return waterPvt_->inverseFormationVolumeFactor(regionIdx, T, p, saltConcentration);
         default: throw std::logic_error("Unhandled phase index "+std::to_string(phaseIdx));
         }
     }
@@ -783,11 +785,12 @@ public:
 
         const auto& p = Ewoms::decay<LhsEval>(fluidState.pressure(phaseIdx));
         const auto& T = Ewoms::decay<LhsEval>(fluidState.temperature(phaseIdx));
+        const auto& saltConcentration = Ewoms::decay<LhsEval>(fluidState.saltConcentration());
 
         switch (phaseIdx) {
         case oilPhaseIdx: return oilPvt_->saturatedInverseFormationVolumeFactor(regionIdx, T, p);
         case gasPhaseIdx: return gasPvt_->saturatedInverseFormationVolumeFactor(regionIdx, T, p);
-        case waterPhaseIdx: return waterPvt_->inverseFormationVolumeFactor(regionIdx, T, p);
+        case waterPhaseIdx: return waterPvt_->inverseFormationVolumeFactor(regionIdx, T, p, saltConcentration);
         default: throw std::logic_error("Unhandled phase index "+std::to_string(phaseIdx));
         }
     }
@@ -925,6 +928,7 @@ public:
 
         const LhsEval& p = Ewoms::decay<LhsEval>(fluidState.pressure(phaseIdx));
         const LhsEval& T = Ewoms::decay<LhsEval>(fluidState.temperature(phaseIdx));
+        const LhsEval& saltConcentration = Ewoms::BlackOil::template getSaltConcentration_<ThisType, FluidState, LhsEval>(fluidState, regionIdx);
 
         switch (phaseIdx) {
         case oilPhaseIdx: {
@@ -962,7 +966,7 @@ public:
         case waterPhaseIdx:
             // since water is always assumed to be immiscible in the black-oil model,
             // there is no "saturated water"
-            return waterPvt_->viscosity(regionIdx, T, p);
+            return waterPvt_->viscosity(regionIdx, T, p, saltConcentration);
         }
 
         throw std::logic_error("Unhandled phase index "+std::to_string(phaseIdx));
