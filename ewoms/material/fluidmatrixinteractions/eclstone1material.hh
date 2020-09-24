@@ -353,7 +353,7 @@ public:
         const Evaluation& Sg = Ewoms::decay<Evaluation>(fluidState.saturation(gasPhaseIdx));
 
         Evaluation kro_ow = OilWaterMaterialLaw::twoPhaseSatKrn(params.oilWaterParams(), Sw);
-        Evaluation kro_go = GasOilMaterialLaw::twoPhaseSatKrw(params.gasOilParams(), 1 - Sg - Swco);
+        Evaluation kro_go = GasOilMaterialLaw::twoPhaseSatKrw(params.gasOilParams(), 1 - Sg);
 
         Evaluation beta;
         if (Sw <= Swco)
