@@ -28,8 +28,6 @@
 #ifndef EWOMS_FLUID_STATE_SATURATION_MODULES_HH
 #define EWOMS_FLUID_STATE_SATURATION_MODULES_HH
 
-#include <ewoms/common/exceptions.hh>
-
 #include <ewoms/common/mathtoolbox.hh>
 #include <ewoms/common/valgrind.hh>
 

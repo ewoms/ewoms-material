@@ -27,8 +27,7 @@
 #ifndef EWOMS_COMPONENT_HH
 #define EWOMS_COMPONENT_HH
 
-#include <ewoms/common/exceptions.hh>
-
+#include <stdexcept>
 namespace Ewoms {
 
 /*!

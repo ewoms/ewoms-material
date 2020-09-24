@@ -28,7 +28,6 @@
 #define EWOMS_NULL_THERMAL_CONDUCTION_LAW_HH
 
 #include <ewoms/common/unused.hh>
-#include <ewoms/common/exceptions.hh>
 
 namespace Ewoms {
 

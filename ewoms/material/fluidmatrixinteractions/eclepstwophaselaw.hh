@@ -30,7 +30,6 @@
 #include "eclepstwophaselawparams.hh"
 
 #include <ewoms/material/fluidstates/saturationoverlayfluidstate.hh>
-#include <ewoms/common/exceptions.hh>
 
 namespace Ewoms {
 /*!

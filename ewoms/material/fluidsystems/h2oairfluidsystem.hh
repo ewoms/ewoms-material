@@ -37,7 +37,6 @@
 #include <ewoms/material/components/tabulatedcomponent.hh>
 
 #include <ewoms/common/valgrind.hh>
-#include <ewoms/common/exceptions.hh>
 
 #include <iostream>
 #include <cassert>

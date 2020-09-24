@@ -36,8 +36,6 @@
 #include <ewoms/eclio/parser/eclipsestate/schedule/schedule.hh>
 #endif
 
-#include <ewoms/common/exceptions.hh>
-
 #include <string>
 #include <cassert>
 #include <algorithm>

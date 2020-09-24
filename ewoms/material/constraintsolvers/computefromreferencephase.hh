@@ -29,7 +29,6 @@
 
 #include <ewoms/material/constraintsolvers/compositionfromfugacities.hh>
 
-#include <ewoms/common/exceptions.hh>
 #include <ewoms/common/valgrind.hh>
 
 #include <dune/common/fvector.hh>

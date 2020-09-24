@@ -30,7 +30,6 @@
 
 #include <ewoms/common/mathtoolbox.hh>
 #include <ewoms/common/valgrind.hh>
-#include <ewoms/common/exceptions.hh>
 
 #include <algorithm>
 

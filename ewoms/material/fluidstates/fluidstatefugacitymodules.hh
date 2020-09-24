@@ -29,7 +29,6 @@
 #define EWOMS_FLUID_STATE_FUGACITY_MODULES_HH
 
 #include <ewoms/common/valgrind.hh>
-#include <ewoms/common/exceptions.hh>
 
 #include <algorithm>
 #include <limits>

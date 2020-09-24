@@ -37,8 +37,6 @@
 #include "eclthermalconductionlawmultiplexer.hh"
 #include "eclthermalconductionlawmultiplexerparams.hh"
 
-#include <ewoms/common/exceptions.hh>
-
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
 #include <ewoms/eclio/parser/deck/deck.hh>

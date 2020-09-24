@@ -35,7 +35,6 @@
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
 #endif
 
-#include <ewoms/common/exceptions.hh>
 #include <ewoms/common/unused.hh>
 
 #include <string>

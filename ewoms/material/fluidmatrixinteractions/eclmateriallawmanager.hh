@@ -46,8 +46,6 @@
 #include <ewoms/eclio/opmlog/opmlog.hh>
 #endif
 
-#include <ewoms/common/exceptions.hh>
-
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
 #include <ewoms/eclio/parser/eclipsestate/tables/tablemanager.hh>
 

@@ -27,9 +27,10 @@
 #ifndef EWOMS_BASE_FLUID_SYSTEM_HH
 #define EWOMS_BASE_FLUID_SYSTEM_HH
 
+#include <stdexcept>
+
 #include "nullparametercache.hh"
 
-#include <ewoms/common/exceptions.hh>
 #include <dune/common/classname.hh>
 
 namespace Ewoms {

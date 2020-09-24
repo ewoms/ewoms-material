@@ -38,8 +38,6 @@
 #include <ewoms/material/binarycoefficients/h2o_n2.hh>
 #include <ewoms/common/valgrind.hh>
 
-#include <ewoms/common/exceptions.hh>
-
 #include <iostream>
 #include <cassert>
 

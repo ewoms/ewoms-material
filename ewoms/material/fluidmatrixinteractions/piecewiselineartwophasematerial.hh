@@ -29,7 +29,6 @@
 
 #include "piecewiselineartwophasematerialparams.hh"
 
-#include <ewoms/common/exceptions.hh>
 #include <ewoms/common/mathtoolbox.hh>
 
 #include <algorithm>

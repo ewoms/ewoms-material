@@ -29,8 +29,6 @@
 
 #include "splinetwophasematerialparams.hh"
 
-#include <ewoms/common/exceptions.hh>
-
 #include <algorithm>
 #include <cmath>
 #include <cassert>
