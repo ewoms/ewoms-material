@@ -28,9 +28,6 @@
 #ifndef EWOMS_BINARY_COEFF_BRINE_CO2_HH
 #define EWOMS_BINARY_COEFF_BRINE_CO2_HH
 
-#include <ewoms/material/components/brine.hh>
-#include <ewoms/material/components/h2o.hh>
-#include <ewoms/material/components/co2.hh>
 #include <ewoms/material/idealgas.hh>
 
 namespace Ewoms {
@@ -40,10 +37,8 @@ namespace BinaryCoeff {
  * \ingroup Binarycoefficients
  * \brief Binary coefficients for brine and CO2.
  */
-template<class Scalar, class CO2Tables, bool verbose = true>
+template<class Scalar, class H2O, class CO2, bool verbose = true>
 class Brine_CO2 {
-    typedef Ewoms::H2O<Scalar> H2O;
-    typedef Ewoms::CO2<Scalar, CO2Tables> CO2;
     typedef Ewoms::IdealGas<Scalar> IdealGas;
     static const int liquidPhaseIdx = 0; // index of the liquid phase
     static const int gasPhaseIdx = 1; // index of the gas phase

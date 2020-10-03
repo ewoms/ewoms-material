@@ -31,6 +31,7 @@
 #include "deadoilpvt.hh"
 #include "liveoilpvt.hh"
 #include "oilpvtthermal.hh"
+#include "brineco2pvt.hh"
 
 #if HAVE_ECL_INPUT
 #include <ewoms/eclio/parser/eclipsestate/eclipsestate.hh>
@@ -60,9 +61,14 @@ namespace Ewoms {
         codeToCall;                                                     \
         break;                                                          \
     }                                                                   \
+    case BrineCo2Pvt: {                                                 \
+        auto& pvtImpl = getRealPvt<BrineCo2Pvt>();                      \
+        codeToCall;                                                     \
+        break;                                                          \
+    }                                                                   \
     case NoOilPvt:                                                      \
         throw std::logic_error("Not implemented: Oil PVT of this deck!"); \
-    }
+    }                                                                     \
 
 /*!
  * \brief This class represents the Pressure-Volume-Temperature relations of the oil
@@ -87,7 +93,8 @@ public:
         LiveOilPvt,
         DeadOilPvt,
         ConstantCompressibilityOilPvt,
-        ThermalOilPvt
+        ThermalOilPvt,
+        BrineCo2Pvt
     };
 
     OilPvtMultiplexer()
@@ -125,6 +132,10 @@ public:
             delete &getRealPvt<ThermalOilPvt>();
             break;
         }
+        case BrineCo2Pvt: {
+            delete &getRealPvt<BrineCo2Pvt>();
+            break;
+        }
 
         case NoOilPvt:
             break;
@@ -141,8 +152,11 @@ public:
     {
         if (!eclState.runspec().phases().active(Phase::OIL))
             return;
-
-        if (enableThermal && eclState.getSimulationConfig().isThermal())
+        // TODO move the BrineCo2 approach to the waterPvtMultiplexer
+        // when a proper gas-water simulator is supported
+        if (eclState.runspec().co2Storage())
+            setApproach(BrineCo2Pvt);
+        else if (enableThermal && eclState.getSimulationConfig().isThermal())
             setApproach(ThermalOilPvt);
         else if (!eclState.getTableManager().getPvcdoTable().empty())
             setApproach(ConstantCompressibilityOilPvt);
@@ -163,6 +177,12 @@ public:
      */
     unsigned numRegions() const
     { EWOMS_OIL_PVT_MULTIPLEXER_CALL(return pvtImpl.numRegions()); return 1; }
+
+    /*!
+     * \brief Return the reference density which are considered by this PVT-object.
+     */
+    const Scalar oilReferenceDensity(unsigned regionIdx)
+    { EWOMS_OIL_PVT_MULTIPLEXER_CALL(return pvtImpl.oilReferenceDensity(regionIdx)); return 700.; }
 
     /*!
      * \brief Returns the specific enthalpy [J/kg] oil given a set of parameters.
@@ -264,6 +284,10 @@ public:
             realOilPvt_ = new Ewoms::OilPvtThermal<Scalar>;
             break;
 
+        case BrineCo2Pvt:
+            realOilPvt_ = new Ewoms::BrineCo2Pvt<Scalar>;
+            break;
+
         case NoOilPvt:
             throw std::logic_error("Not implemented: Oil PVT of this deck!");
         }
@@ -336,6 +360,20 @@ public:
         return *static_cast<const Ewoms::OilPvtThermal<Scalar>* >(realOilPvt_);
     }
 
+    template <OilPvtApproach approachV>
+    typename std::enable_if<approachV == BrineCo2Pvt, Ewoms::BrineCo2Pvt<Scalar>>::type& getRealPvt()
+    {
+        assert(approach() == approachV);
+        return *static_cast<Ewoms::BrineCo2Pvt<Scalar>* >(realOilPvt_);
+    }
+
+    template <OilPvtApproach approachV>
+    typename std::enable_if<approachV == BrineCo2Pvt, const Ewoms::BrineCo2Pvt<Scalar> >::type& getRealPvt() const
+    {
+        assert(approach() == approachV);
+        return *static_cast<const Ewoms::BrineCo2Pvt<Scalar>* >(realOilPvt_);
+    }
+
     const void* realOilPvt() const { return realOilPvt_; }
 
     bool operator==(const OilPvtMultiplexer<Scalar,enableThermal>& data) const
@@ -356,6 +394,9 @@ public:
         case ThermalOilPvt:
             return *static_cast<const Ewoms::OilPvtThermal<Scalar>*>(realOilPvt_) ==
                    *static_cast<const Ewoms::OilPvtThermal<Scalar>*>(data.realOilPvt_);
+        case BrineCo2Pvt:
+            return *static_cast<const Ewoms::BrineCo2Pvt<Scalar>*>(realOilPvt_) ==
+                    *static_cast<const Ewoms::BrineCo2Pvt<Scalar>*>(data.realOilPvt_);
         default:
             return true;
         }
@@ -376,6 +417,9 @@ public:
             break;
         case ThermalOilPvt:
             realOilPvt_ = new Ewoms::OilPvtThermal<Scalar>(*static_cast<const Ewoms::OilPvtThermal<Scalar>*>(data.realOilPvt_));
+            break;
+        case BrineCo2Pvt:
+            realOilPvt_ = new Ewoms::BrineCo2Pvt<Scalar>(*static_cast<const Ewoms::BrineCo2Pvt<Scalar>*>(data.realOilPvt_));
             break;
         default:
             break;

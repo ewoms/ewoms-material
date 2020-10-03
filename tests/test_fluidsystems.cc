@@ -58,11 +58,6 @@
 // include the tables for CO2 which are delivered with ewoms-material by default
 #include <ewoms/common/uniformtabulated2dfunction.hh>
 
-namespace Ewoms {
-namespace FluidSystemsTest {
-#include <ewoms/material/components/co2tables.inc>
-} }
-
 #include <dune/common/parallel/mpihelper.hh>
 
 // check that the blackoil fluid system implements all non-standard functions
@@ -243,7 +238,7 @@ void testAllFluidSystems()
     }
 
     // Brine -- CO2
-    {   typedef Ewoms::BrineCO2FluidSystem<Scalar, Ewoms::FluidSystemsTest::CO2Tables> FluidSystem;
+    {   typedef Ewoms::BrineCO2FluidSystem<Scalar, Ewoms::CO2GasPvtDefaultTables::CO2Tables> FluidSystem;
         checkFluidSystem<Scalar, FluidSystem, FluidStateEval, LhsEval>(); }
 
     // H2O -- N2

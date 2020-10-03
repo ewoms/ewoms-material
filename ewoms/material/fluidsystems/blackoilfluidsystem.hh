@@ -31,6 +31,7 @@
 #include "blackoilpvt/oilpvtmultiplexer.hh"
 #include "blackoilpvt/gaspvtmultiplexer.hh"
 #include "blackoilpvt/waterpvtmultiplexer.hh"
+#include "blackoilpvt/brineco2pvt.hh"
 
 #include <ewoms/material/fluidsystems/basefluidsystem.hh>
 #include <ewoms/material/constants.hh>
@@ -183,8 +184,7 @@ public:
      */
     static void initFromEclState(const EclipseState& eclState, const Schedule& schedule)
     {
-        const auto& densityTable = eclState.getTableManager().getDensityTable();
-        size_t numRegions = densityTable.size();
+        size_t numRegions = eclState.runspec().tabdims().getNumPVTTables();
         initBegin(numRegions);
 
         numActivePhases_ = 0;
@@ -219,14 +219,6 @@ public:
         setEnableDissolvedGas(eclState.getSimulationConfig().hasDISGAS());
         setEnableVaporizedOil(eclState.getSimulationConfig().hasVAPOIL());
 
-        // set the reference densities of all PVT regions
-        for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
-            setReferenceDensities(densityTable[regionIdx].oil,
-                                  densityTable[regionIdx].water,
-                                  densityTable[regionIdx].gas,
-                                  regionIdx);
-        }
-
         if (phaseIsActive(gasPhaseIdx)) {
             gasPvt_ = std::make_shared<GasPvt>();
             gasPvt_->initFromEclState(eclState, schedule);
@@ -240,6 +232,14 @@ public:
         if (phaseIsActive(waterPhaseIdx)) {
             waterPvt_ = std::make_shared<WaterPvt>();
             waterPvt_->initFromEclState(eclState, schedule);
+        }
+
+        // set the reference densities of all PVT regions
+        for (unsigned regionIdx = 0; regionIdx < numRegions; ++regionIdx) {
+            setReferenceDensities(phaseIsActive(oilPhaseIdx)? oilPvt_->oilReferenceDensity(regionIdx):700.,
+                                  phaseIsActive(waterPhaseIdx)? waterPvt_->waterReferenceDensity(regionIdx):1000.,
+                                  phaseIsActive(gasPhaseIdx)? gasPvt_->gasReferenceDensity(regionIdx):2.,
+                                  regionIdx);
         }
 
         initEnd();
