@@ -53,6 +53,7 @@ class CO2 : public Component<Scalar, CO2<Scalar, CO2Tables> >
 {
     static const Scalar R;
     static bool warningPrinted;
+    static CO2Tables co2Tables_;
 
 public:
     /*!
@@ -95,25 +96,25 @@ public:
      * \brief Returns the pressure [Pa] at CO2's triple point.
      */
     static Scalar minTabulatedPressure()
-    { return CO2Tables::tabulatedEnthalpy.minPress(); /* [N/m^2] */ }
+    { return co2Tables_.tabulatedEnthalpy.minPress(); /* [N/m^2] */ }
 
     /*!
      * \brief Returns the pressure [Pa] at CO2's triple point.
      */
     static Scalar maxTabulatedPressure()
-    { return CO2Tables::tabulatedEnthalpy.maxPress(); /* [N/m^2] */ }
+    { return co2Tables_.tabulatedEnthalpy.maxPress(); /* [N/m^2] */ }
 
     /*!
      * \brief Returns the pressure [Pa] at CO2's triple point.
      */
     static Scalar minTabulatedTemperature()
-    { return CO2Tables::tabulatedEnthalpy.minTemp(); /* [N/m^2] */ }
+    { return co2Tables_.tabulatedEnthalpy.minTemp(); /* [N/m^2] */ }
 
     /*!
      * \brief Returns the pressure [Pa] at CO2's triple point.
      */
     static Scalar maxTabulatedTemperature()
-    { return CO2Tables::tabulatedEnthalpy.maxTemp(); /* [N/m^2] */ }
+    { return co2Tables_.tabulatedEnthalpy.maxTemp(); /* [N/m^2] */ }
 
     /*!
      * \brief The vapor pressure in [N/m^2] of pure CO2
@@ -164,7 +165,7 @@ public:
     static Evaluation gasEnthalpy(const Evaluation& temperature,
                                   const Evaluation& pressure)
     {
-        return CO2Tables::tabulatedEnthalpy.eval(temperature, pressure);
+        return co2Tables_.tabulatedEnthalpy.eval(temperature, pressure);
     }
 
     /*!
@@ -186,7 +187,7 @@ public:
     template <class Evaluation>
     static Evaluation gasDensity(const Evaluation& temperature, const Evaluation& pressure)
     {
-        return CO2Tables::tabulatedDensity.eval(temperature, pressure);
+        return co2Tables_.tabulatedDensity.eval(temperature, pressure);
     }
 
     /*!
@@ -265,6 +266,9 @@ bool CO2<Scalar, CO2Tables>::warningPrinted = false;
 
 template <class Scalar, class CO2Tables>
 const Scalar CO2<Scalar, CO2Tables>::R = Constants<Scalar>::R;
+
+template <class Scalar, class CO2Tables>
+CO2Tables CO2<Scalar, CO2Tables>::co2Tables_;
 
 } // namespace Ewoms
 
