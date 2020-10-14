@@ -43,15 +43,22 @@
 
 namespace Ewoms {
 
-namespace CO2GasPvtDefaultTables {
-#include <ewoms/material/components/co2tables.inc>
+namespace CO2DefaultTables {
+// NOTE: the co2tables.inc.cc file *must* be included in the compile unit which contains
+// the main() function to avoid undefined symbols. This is certainly an ugly hack, but it
+// seems like there is no "elegant" solution for including data fields in library-less
+// projects which works if multiple compile units are involved and also does not produce
+// compiler warnings. The only positive aspect is that this approach reduces compile time
+// since these tables tend to be pretty big and should thus only have to be compiled once
+// if possible.
+#include <ewoms/material/components/co2tables.inc.hh>
 }
 
 /*!
  * \brief This class represents the Pressure-Volume-Temperature relations of the gas phase
  * for CO2
  */
-template <class Scalar, class CO2 = Ewoms::CO2<Scalar, Ewoms::CO2GasPvtDefaultTables::CO2Tables> >
+template <class Scalar, class CO2 = Ewoms::CO2<Scalar, Ewoms::CO2DefaultTables::CO2Tables> >
 class Co2GasPvt
 {
     typedef std::vector<std::pair<Scalar, Scalar> > SamplingPoints;

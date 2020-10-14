@@ -60,6 +60,11 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
+namespace Ewoms {
+namespace CO2DefaultTables {
+#include <ewoms/material/components/co2tables.inc.cc>
+}}
+
 // check that the blackoil fluid system implements all non-standard functions
 template <class Evaluation, class FluidSystem>
 void ensureBlackoilApi()
@@ -238,7 +243,7 @@ void testAllFluidSystems()
     }
 
     // Brine -- CO2
-    {   typedef Ewoms::BrineCO2FluidSystem<Scalar, Ewoms::CO2GasPvtDefaultTables::CO2Tables> FluidSystem;
+    {   typedef Ewoms::BrineCO2FluidSystem<Scalar, Ewoms::CO2DefaultTables::CO2Tables> FluidSystem;
         checkFluidSystem<Scalar, FluidSystem, FluidStateEval, LhsEval>(); }
 
     // H2O -- N2

@@ -49,6 +49,11 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
+namespace Ewoms {
+namespace CO2DefaultTables {
+#include <ewoms/material/components/co2tables.inc.cc>
+}}
+
 // values of strings based on the first SPE1 test case of opm-data.  note that in the
 // real world it does not make much sense to specify a fluid phase using more than a
 // single keyword, but for a unit test, this saves a lot of boiler-plate code.

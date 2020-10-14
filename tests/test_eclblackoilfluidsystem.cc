@@ -49,6 +49,11 @@
 #include <type_traits>
 #include <cmath>
 
+namespace Ewoms {
+namespace CO2DefaultTables {
+#include <ewoms/material/components/co2tables.inc.cc>
+}}
+
 // values of strings based on the SPE1 and NORNE cases of opm-data.
 static const char* deckString1 =
     "RUNSPEC\n"

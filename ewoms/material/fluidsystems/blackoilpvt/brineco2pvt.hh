@@ -27,6 +27,7 @@
 #ifndef EWOMS_BRINE_CO2_PVT_HH
 #define EWOMS_BRINE_CO2_PVT_HH
 
+#include "co2gaspvt.hh"
 #include <ewoms/material/constants.hh>
 
 #include <ewoms/common/tabulated1dfunction.hh>
@@ -48,15 +49,11 @@
 
 namespace Ewoms {
 
-namespace BrineCO2PvtDefaultTables {
-#include <ewoms/material/components/co2tables.inc>
-}
-
 /*!
  * \brief This class represents the Pressure-Volume-Temperature relations of the liquid phase
  * for a CO2-Brine system
  */
-template <class Scalar, class CO2 = Ewoms::CO2<Scalar, Ewoms::BrineCO2PvtDefaultTables::CO2Tables> >
+template <class Scalar, class CO2 = Ewoms::CO2<Scalar, Ewoms::CO2DefaultTables::CO2Tables> >
 class BrineCo2Pvt
 {
     typedef std::vector<std::pair<Scalar, Scalar> > SamplingPoints;

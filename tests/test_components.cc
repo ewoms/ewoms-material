@@ -58,7 +58,8 @@
 
 namespace Ewoms {
 namespace ComponentsTest {
-#include <ewoms/material/components/co2tables.inc>
+#include <ewoms/material/components/co2tables.inc.hh>
+#include <ewoms/material/components/co2tables.inc.cc>
 }}
 
 #include <dune/common/parallel/mpihelper.hh>
