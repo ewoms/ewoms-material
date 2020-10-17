@@ -36,6 +36,11 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 
+namespace Ewoms {
+namespace CO2DefaultTables {
+#include <ewoms/material/components/co2tables.inc.cc>
+}}
+
 int main()
 {
     {
