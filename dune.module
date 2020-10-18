@@ -1,9 +1,8 @@
 Module: ewoms-material
 Description: Thermodynamics and material law code
-Version: 2020.11-pre
-Label: 2020.11-pre
-Codename: Auric
-Maintainer: ewoms@ewoms.org
+Version: 2021.05-pre
+Label: 2021.05-pre
+Codename: Spectre
 MaintainerName: The eWoms Project
 Url: https://ewoms.org
 Depends: ewoms-common
