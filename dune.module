@@ -3,6 +3,7 @@ Description: Thermodynamics and material law code
 Version: 2021.05-pre
 Label: 2021.05-pre
 Codename: Spectre
+Maintainer: ewoms@ewoms.org
 MaintainerName: The eWoms Project
 Url: https://ewoms.org
 Depends: ewoms-common
