@@ -173,7 +173,10 @@ struct EclEpsScalingPointsInfo
         bool hasGas = eclState.runspec().phases().active(Phase::GAS);
         bool hasOil = eclState.runspec().phases().active(Phase::OIL);
 
-        if (!hasWater) {
+        if (int(hasWater) + int(hasGas) + int(hasOil) == 1) {
+            return;
+        }
+        else if (!hasWater) {
             Swl = 0.0;
             Swu = 0.0;
             Swcr = 0.0;
@@ -186,7 +189,8 @@ struct EclEpsScalingPointsInfo
                     assert(!slgofTables.empty());
                     extractUnscaledSlgof_(slgofTables.getTable<SlgofTable>(satRegionIdx));
                 }
-            } else if (family2) {
+            }
+            else if (family2) {
                 extractUnscaledSgfn_(sgfnTables.getTable<SgfnTable>(satRegionIdx));
                 extractUnscaledSof2_(sof2Tables.getTable<Sof2Table>(satRegionIdx));
             }
@@ -203,7 +207,8 @@ struct EclEpsScalingPointsInfo
             bool family2 = !swfnTables.empty() && !sof2Tables.empty();
             if (family1) {
                 extractUnscaledSwof_(swofTables.getTable<SwofTable>(satRegionIdx));
-            } else if (family2) {
+            }
+            else if (family2) {
                 extractUnscaledSwfn_(swfnTables.getTable<SwfnTable>(satRegionIdx));
                 extractUnscaledSof2_(sof2Tables.getTable<Sof2Table>(satRegionIdx));
             }
