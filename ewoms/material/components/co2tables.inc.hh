@@ -43,4 +43,3 @@ struct CO2Tables {
     static TabulatedFunction tabulatedDensity;
     static constexpr double brineSalinity = 1.000000000000000e-01;
 };
-

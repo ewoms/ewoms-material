@@ -29,10 +29,11 @@
 #include <ewoms/material/idealgas.hh>
 
 #include <ewoms/common/mathtoolbox.hh>
-
 #include <ewoms/common/unused.hh>
+#include <ewoms/common/exceptions.hh>
 
 #include <cmath>
+#include <sstream>
 
 namespace Ewoms {
 

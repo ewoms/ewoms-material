@@ -15,6 +15,9 @@ include(EwomsMacros NO_POLICY_SCOPE)
 # do most of the book-keeping required
 ewoms_project()
 
+# either std::optional or std::experimental::optional needs to be supported
+find_package(StdOptional REQUIRED)
+
 # we want all features detected by the build system to be enabled,
 # thank you!
 dune_enable_all_packages()

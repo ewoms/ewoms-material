@@ -26,6 +26,9 @@
 
 #include <ewoms/material/idealgas.hh>
 
+#include <ewoms/common/valgrind.hh>
+#include <ewoms/common/mathtoolbox.hh>
+
 namespace Ewoms {
 namespace BinaryCoeff {
 

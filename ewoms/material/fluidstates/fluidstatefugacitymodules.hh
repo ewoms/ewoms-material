@@ -26,6 +26,7 @@
 
 #include <ewoms/common/valgrind.hh>
 
+#include <stdexcept>
 #include <algorithm>
 #include <limits>
 
